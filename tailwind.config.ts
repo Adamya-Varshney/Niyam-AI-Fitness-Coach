@@ -13,12 +13,26 @@ export default {
       },
     },
     extend: {
+      fontFamily: {
+        sans: ["Inter", "system-ui", "sans-serif"],
+        display: ['"Source Serif 4"', "Georgia", "serif"],
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
+        "agent-bubble": {
+          DEFAULT: "hsl(var(--agent-bubble))",
+          foreground: "hsl(var(--agent-bubble-foreground))",
+        },
+        "user-bubble": {
+          DEFAULT: "hsl(var(--user-bubble))",
+          foreground: "hsl(var(--user-bubble-foreground))",
+        },
+        "accent-warm": "hsl(var(--accent-warm))",
+        "accent-cool": "hsl(var(--accent-cool))",
         primary: {
           DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))",
