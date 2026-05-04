@@ -6,8 +6,9 @@ import type {
   StateResponse,
 } from "./types";
 
-const BASE_URL = (import.meta.env.VITE_N8N_BASE_URL as string | undefined)?.replace(/\/$/, "") ?? "";
-const API_KEY = (import.meta.env.VITE_N8N_API_KEY as string | undefined) ?? "";
+// Hardcoded for prototyping — move to env vars before going public.
+const BASE_URL = "https://info15779.n8n-wsk.com";
+const API_KEY = "fc_secret_Adamya";
 
 const TIMEOUT_MS = 12_000;
 
