@@ -175,6 +175,11 @@ export default function Onboard() {
                   </div>
                 );
               })}
+              {(result.baseline_plan?.sessions ?? []).length === 0 && (
+                <p className="text-xs text-muted-foreground">
+                  Your detailed week will populate as the coach comes online.
+                </p>
+              )}
             </div>
           </div>
           <Button size="lg" onClick={finish} className="rounded-2xl">
