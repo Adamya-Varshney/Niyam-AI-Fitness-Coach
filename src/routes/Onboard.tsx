@@ -131,10 +131,10 @@ export default function Onboard() {
           <div className="rounded-2xl bg-card border border-border/60 p-5 shadow-sm">
             <div className="font-display text-2xl mb-2">Here's your week</div>
             <p className="text-sm text-muted-foreground leading-relaxed">
-              {result.welcome_message}
+              {result.welcome_message ?? "You're all set. Your plan will appear here as the system warms up."}
             </p>
             <div className="mt-5 flex flex-col gap-3">
-              {result.baseline_plan.sessions.map((s, i) => {
+              {(result.baseline_plan?.sessions ?? []).map((s, i) => {
                 const focus = s.focus ?? s.type ?? "Session";
                 const hasEx = s.exercises && s.exercises.length > 0;
                 const open = expanded.has(i);
