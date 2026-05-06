@@ -8,7 +8,6 @@ import type {
 
 // Hardcoded for prototyping — move to env vars before going public.
 const BASE_URL = "https://info15779.n8n-wsk.com";
-const API_KEY = "fc_secret_Adamya";
 
 const TIMEOUT_MS = 12_000;
 
@@ -25,10 +24,9 @@ export class ApiError extends Error {
   }
 }
 
-function authHeaders(): HeadersInit {
+function textPlainHeaders(): HeadersInit {
   return {
-    "Content-Type": "application/json",
-    Authorization: `Bearer ${API_KEY}`,
+    "Content-Type": "text/plain",
   };
 }
 
@@ -41,7 +39,7 @@ async function request<T>(path: string, init: RequestInit): Promise<T> {
     res = await fetch(`${BASE_URL}${path}`, {
       ...init,
       signal: AbortSignal.timeout(TIMEOUT_MS),
-      headers: { ...authHeaders(), ...(init.headers ?? {}) },
+      headers: { ...textPlainHeaders(), ...(init.headers ?? {}) },
     });
   } catch (err) {
     const isTimeout = err instanceof DOMException && err.name === "TimeoutError";
