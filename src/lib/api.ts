@@ -24,10 +24,9 @@ export class ApiError extends Error {
   }
 }
 
-function authHeaders(): HeadersInit {
+function textPlainHeaders(): HeadersInit {
   return {
-    "Content-Type": "application/json",
-    Authorization: `Bearer ${API_KEY}`,
+    "Content-Type": "text/plain",
   };
 }
 
