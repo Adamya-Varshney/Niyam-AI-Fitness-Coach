@@ -8,7 +8,6 @@ import type {
 
 // Hardcoded for prototyping — move to env vars before going public.
 const BASE_URL = "https://info15779.n8n-wsk.com";
-const API_KEY = "fc_secret_Adamya";
 
 const TIMEOUT_MS = 12_000;
 
