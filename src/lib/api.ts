@@ -24,9 +24,9 @@ export class ApiError extends Error {
   }
 }
 
-function textPlainHeaders(): HeadersInit {
+function jsonHeaders(): HeadersInit {
   return {
-    "Content-Type": "text/plain",
+    "Content-Type": "application/json",
   };
 }
 
