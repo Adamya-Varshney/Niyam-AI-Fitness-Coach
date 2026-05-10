@@ -39,7 +39,7 @@ async function request<T>(path: string, init: RequestInit): Promise<T> {
     res = await fetch(`${BASE_URL}${path}`, {
       ...init,
       signal: AbortSignal.timeout(TIMEOUT_MS),
-      headers: { ...textPlainHeaders(), ...(init.headers ?? {}) },
+      headers: { ...jsonHeaders(), ...(init.headers ?? {}) },
     });
   } catch (err) {
     const isTimeout = err instanceof DOMException && err.name === "TimeoutError";
