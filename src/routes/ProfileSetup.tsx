@@ -1,0 +1,193 @@
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { z } from "zod";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { ApiError, postProfile } from "@/lib/api";
+import { useUser } from "@/lib/user-context";
+import type { Equipment, WorkoutStyle } from "@/lib/types";
+
+const EQUIPMENT_OPTIONS: { value: Equipment; label: string }[] = [
+  { value: "none", label: "None / bodyweight" },
+  { value: "dumbbells", label: "Dumbbells" },
+  { value: "resistance_bands", label: "Resistance bands" },
+  { value: "cardio_machine", label: "Cardio machine" },
+  { value: "full_gym", label: "Full gym" },
+];
+
+const STYLE_OPTIONS: { value: WorkoutStyle; label: string }[] = [
+  { value: "strength", label: "Strength" },
+  { value: "cardio", label: "Cardio" },
+  { value: "hiit", label: "HIIT" },
+  { value: "yoga", label: "Yoga" },
+  { value: "mobility", label: "Mobility" },
+  { value: "sports", label: "Sports" },
+];
+
+const profileSchema = z.object({
+  injuries: z.string().trim().max(500, "Keep it under 500 characters."),
+  equipment: z.array(z.string()).max(EQUIPMENT_OPTIONS.length),
+  workout_styles: z.array(z.string()).max(STYLE_OPTIONS.length),
+  beliefs_diet: z.string().trim().max(500, "Keep it under 500 characters."),
+});
+
+function Chip({
+  active,
+  onClick,
+  children,
+}: {
+  active: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`rounded-full border px-4 py-2 text-sm transition-all duration-200 ${
+        active
+          ? "border-primary bg-primary/10 text-foreground"
+          : "border-border bg-card text-muted-foreground hover:border-foreground/40 hover:text-foreground"
+      }`}
+    >
+      {children}
+    </button>
+  );
+}
+
+export default function ProfileSetup() {
+  const navigate = useNavigate();
+  const { userId } = useUser();
+  const [injuries, setInjuries] = useState("");
+  const [equipment, setEquipment] = useState<Equipment[]>([]);
+  const [styles, setStyles] = useState<WorkoutStyle[]>([]);
+  const [beliefs, setBeliefs] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
+
+  const toggle = <T extends string>(arr: T[], v: T): T[] =>
+    arr.includes(v) ? arr.filter((x) => x !== v) : [...arr, v];
+
+  const save = async () => {
+    const parsed = profileSchema.safeParse({
+      injuries,
+      equipment,
+      workout_styles: styles,
+      beliefs_diet: beliefs,
+    });
+    if (!parsed.success) {
+      setErrorMsg(parsed.error.issues[0]?.message ?? "Please review your inputs.");
+      return;
+    }
+    if (!userId) {
+      navigate("/onboard");
+      return;
+    }
+    setSubmitting(true);
+    setErrorMsg("");
+    try {
+      await postProfile({ user_id: userId, ...parsed.data, equipment, workout_styles: styles });
+    } catch (err) {
+      // Non-blocking: persist locally so the UX is functional even if the workflow isn't wired yet.
+      if (err instanceof ApiError) {
+        try {
+          localStorage.setItem(
+            `profile_prefs:${userId}`,
+            JSON.stringify(parsed.data),
+          );
+        } catch {
+          // ignore storage errors
+        }
+      }
+    } finally {
+      setSubmitting(false);
+      navigate("/chat");
+    }
+  };
+
+  return (
+    <main className="min-h-screen bg-background">
+      <div className="fade-in mx-auto w-full max-w-md flex flex-col gap-8 px-6 py-12">
+        <header className="flex flex-col gap-2">
+          <h1 className="font-display text-3xl sm:text-4xl leading-tight">
+            Help us tailor it further
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            All fields are optional. Skip anything that doesn't apply.
+          </p>
+        </header>
+
+        <section className="flex flex-col gap-3">
+          <label className="text-sm font-medium">Injuries or physical limitations</label>
+          <Textarea
+            value={injuries}
+            onChange={(e) => setInjuries(e.target.value)}
+            placeholder="e.g. left knee, mild lower back"
+            maxLength={500}
+            rows={3}
+            className="rounded-2xl"
+          />
+        </section>
+
+        <section className="flex flex-col gap-3">
+          <label className="text-sm font-medium">Available equipment</label>
+          <div className="flex flex-wrap gap-2">
+            {EQUIPMENT_OPTIONS.map((o) => (
+              <Chip
+                key={o.value}
+                active={equipment.includes(o.value)}
+                onClick={() => setEquipment((prev) => toggle(prev, o.value))}
+              >
+                {o.label}
+              </Chip>
+            ))}
+          </div>
+        </section>
+
+        <section className="flex flex-col gap-3">
+          <label className="text-sm font-medium">Workout style preferences</label>
+          <div className="flex flex-wrap gap-2">
+            {STYLE_OPTIONS.map((o) => (
+              <Chip
+                key={o.value}
+                active={styles.includes(o.value)}
+                onClick={() => setStyles((prev) => toggle(prev, o.value))}
+              >
+                {o.label}
+              </Chip>
+            ))}
+          </div>
+        </section>
+
+        <section className="flex flex-col gap-3">
+          <label className="text-sm font-medium">Health beliefs / dietary approach</label>
+          <Textarea
+            value={beliefs}
+            onChange={(e) => setBeliefs(e.target.value)}
+            placeholder="e.g. vegetarian, intermittent fasting, avoid late workouts"
+            maxLength={500}
+            rows={3}
+            className="rounded-2xl"
+          />
+        </section>
+
+        {errorMsg && <p className="text-sm text-destructive">{errorMsg}</p>}
+
+        <div className="flex flex-col gap-2">
+          <Button size="lg" className="rounded-2xl" onClick={save} disabled={submitting}>
+            {submitting ? "Saving…" : "Save & continue"}
+          </Button>
+          <Button
+            variant="ghost"
+            size="lg"
+            className="rounded-2xl text-muted-foreground hover:text-foreground"
+            onClick={() => navigate("/chat")}
+            disabled={submitting}
+          >
+            Skip for now
+          </Button>
+        </div>
+      </div>
+    </main>
+  );
+}

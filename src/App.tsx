@@ -7,6 +7,7 @@ import NotFound from "./pages/NotFound.tsx";
 import Onboard from "./routes/Onboard.tsx";
 import Chat from "./routes/Chat.tsx";
 import Dashboard from "./routes/Dashboard.tsx";
+import ProfileSetup from "./routes/ProfileSetup.tsx";
 import { UserProvider, useUser } from "./lib/user-context";
 
 const queryClient = new QueryClient();
@@ -28,6 +29,7 @@ const App = () => (
             <Route path="/onboard" element={<Onboard />} />
             <Route path="/chat" element={<Chat />} />
             <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/profile/setup" element={<ProfileSetup />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

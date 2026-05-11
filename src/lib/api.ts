@@ -3,8 +3,10 @@ import type {
   ChatResponse,
   OnboardRequest,
   OnboardResponse,
+  ProfileRequest,
   StateResponse,
 } from "./types";
+
 
 // Hardcoded for prototyping — move to env vars before going public.
 const BASE_URL = "https://info15779.n8n-wsk.com";
@@ -77,6 +79,13 @@ export function postOnboard(payload: OnboardRequest): Promise<OnboardResponse> {
 
 export function postChat(payload: ChatRequest): Promise<ChatResponse> {
   return request<ChatResponse>("/webhook/chat", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function postProfile(payload: ProfileRequest): Promise<{ ok: true }> {
+  return request<{ ok: true }>("/webhook/profile", {
     method: "POST",
     body: JSON.stringify(payload),
   });

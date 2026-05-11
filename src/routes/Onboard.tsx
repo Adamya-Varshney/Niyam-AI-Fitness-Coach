@@ -7,7 +7,7 @@ import type { Goal, CurrentActivity, OnboardResponse } from "@/lib/types";
 import { useUser } from "@/lib/user-context";
 import { ChevronDown, ChevronUp } from "lucide-react";
 
-type Step = "goal" | "activity" | "time" | "submitting" | "result" | "error";
+type Step = "name" | "goal" | "activity" | "time" | "submitting" | "result" | "error";
 
 const GOAL_OPTIONS: { value: Goal; label: string }[] = [
   { value: "build_strength", label: "Build strength" },
@@ -26,7 +26,8 @@ const ACTIVITY_OPTIONS: { value: CurrentActivity; label: string }[] = [
 export default function Onboard() {
   const navigate = useNavigate();
   const { setUserId } = useUser();
-  const [step, setStep] = useState<Step>("goal");
+  const [step, setStep] = useState<Step>("name");
+  const [name, setName] = useState<string>("");
   const [goal, setGoal] = useState<Goal | null>(null);
   const [activity, setActivity] = useState<CurrentActivity | null>(null);
   const [time, setTime] = useState<number>(180);
@@ -43,7 +44,7 @@ export default function Onboard() {
     try {
       const res = await postOnboard({
         user_id: userId,
-        name: "",
+        name: name.trim(),
         goal: goalVal,
         current_activity: activityVal,
         time_per_week_min: timeMin,
@@ -63,9 +64,9 @@ export default function Onboard() {
     }
   };
 
-  const finish = () => {
+  const finish = (target: "/chat" | "/profile/setup" = "/chat") => {
     if (pendingUserId) setUserId(pendingUserId);
-    navigate("/chat");
+    navigate(target);
   };
 
   const toggleExpanded = (i: number) => {
@@ -79,6 +80,16 @@ export default function Onboard() {
 
   return (
     <main className="min-h-screen bg-background">
+      {step === "name" && (
+        <QuestionCard
+          heading="First — what should we call you?"
+          input={{ placeholder: "Your first name", maxLength: 60, autoComplete: "given-name", defaultValue: name }}
+          onAnswer={(v) => {
+            setName(String(v));
+            setStep("goal");
+          }}
+        />
+      )}
       {step === "goal" && (
         <QuestionCard
           heading="What's the result you're after?"
@@ -198,9 +209,19 @@ export default function Onboard() {
               )}
             </div>
           </div>
-          <Button size="lg" onClick={finish} className="rounded-2xl">
-            Let's go
-          </Button>
+          <div className="flex flex-col gap-2">
+            <Button size="lg" onClick={() => finish("/chat")} className="rounded-2xl">
+              Let's go
+            </Button>
+            <Button
+              variant="ghost"
+              size="lg"
+              onClick={() => finish("/profile/setup")}
+              className="rounded-2xl text-muted-foreground hover:text-foreground"
+            >
+              Complete your profile (optional)
+            </Button>
+          </div>
         </div>
       )}
     </main>
