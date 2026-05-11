@@ -9,7 +9,7 @@ import type {
 // Hardcoded for prototyping — move to env vars before going public.
 const BASE_URL = "https://info15779.n8n-wsk.com";
 
-const TIMEOUT_MS = 12_000;
+const TIMEOUT_MS = 45_000;
 
 export class ApiError extends Error {
   status: number;

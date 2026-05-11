@@ -55,7 +55,9 @@ export default function Onboard() {
       const msg =
         err instanceof ApiError && err.status === 404
           ? "We couldn't reach the setup service just yet. Try again in a moment."
-          : "Something went sideways setting things up. Try again?";
+          : err instanceof ApiError && err.kind === "timeout"
+            ? "The setup service is still building your plan. Try again in a moment."
+            : "Something went sideways setting things up. Try again?";
       setErrorMsg(msg);
       setStep("error");
     }
