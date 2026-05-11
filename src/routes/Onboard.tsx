@@ -44,7 +44,7 @@ export default function Onboard() {
     try {
       const res = await postOnboard({
         user_id: userId,
-        name: "",
+        name: name.trim(),
         goal: goalVal,
         current_activity: activityVal,
         time_per_week_min: timeMin,
