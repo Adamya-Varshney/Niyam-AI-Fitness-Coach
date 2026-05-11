@@ -199,9 +199,19 @@ export default function Onboard() {
               )}
             </div>
           </div>
-          <Button size="lg" onClick={finish} className="rounded-2xl">
-            Let's go
-          </Button>
+          <div className="flex flex-col gap-2">
+            <Button size="lg" onClick={() => finish("/chat")} className="rounded-2xl">
+              Let's go
+            </Button>
+            <Button
+              variant="ghost"
+              size="lg"
+              onClick={() => finish("/profile/setup")}
+              className="rounded-2xl text-muted-foreground hover:text-foreground"
+            >
+              Complete your profile (optional)
+            </Button>
+          </div>
         </div>
       )}
     </main>
