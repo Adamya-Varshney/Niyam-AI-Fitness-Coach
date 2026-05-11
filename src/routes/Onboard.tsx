@@ -26,7 +26,8 @@ const ACTIVITY_OPTIONS: { value: CurrentActivity; label: string }[] = [
 export default function Onboard() {
   const navigate = useNavigate();
   const { setUserId } = useUser();
-  const [step, setStep] = useState<Step>("goal");
+  const [step, setStep] = useState<Step>("name");
+  const [name, setName] = useState<string>("");
   const [goal, setGoal] = useState<Goal | null>(null);
   const [activity, setActivity] = useState<CurrentActivity | null>(null);
   const [time, setTime] = useState<number>(180);
