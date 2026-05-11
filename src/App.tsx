@@ -7,6 +7,7 @@ import NotFound from "./pages/NotFound.tsx";
 import Onboard from "./routes/Onboard.tsx";
 import Chat from "./routes/Chat.tsx";
 import Dashboard from "./routes/Dashboard.tsx";
+import ProfileSetup from "./routes/ProfileSetup.tsx";
 import { UserProvider, useUser } from "./lib/user-context";
 
 const queryClient = new QueryClient();
