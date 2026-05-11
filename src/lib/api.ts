@@ -3,8 +3,10 @@ import type {
   ChatResponse,
   OnboardRequest,
   OnboardResponse,
+  ProfileRequest,
   StateResponse,
 } from "./types";
+
 
 // Hardcoded for prototyping — move to env vars before going public.
 const BASE_URL = "https://info15779.n8n-wsk.com";
