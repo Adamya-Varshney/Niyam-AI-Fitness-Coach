@@ -80,6 +80,16 @@ export default function Onboard() {
 
   return (
     <main className="min-h-screen bg-background">
+      {step === "name" && (
+        <QuestionCard
+          heading="First — what should we call you?"
+          input={{ placeholder: "Your first name", maxLength: 60, autoComplete: "given-name", defaultValue: name }}
+          onAnswer={(v) => {
+            setName(String(v));
+            setStep("goal");
+          }}
+        />
+      )}
       {step === "goal" && (
         <QuestionCard
           heading="What's the result you're after?"
