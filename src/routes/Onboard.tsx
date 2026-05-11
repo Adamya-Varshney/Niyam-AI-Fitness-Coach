@@ -165,11 +165,25 @@ export default function Onboard() {
                         ))}
                     </button>
                     {open && hasEx && (
-                      <ul className="mt-3 space-y-1.5">
+                      <ul className="mt-3 divide-y divide-border/40 rounded-lg bg-background/60 overflow-hidden">
                         {s.exercises!.map((ex, j) => (
-                          <li key={j} className="text-sm">
-                            <span className="text-foreground">{ex.name}</span>
-                            <span className="text-muted-foreground"> — {ex.sets} × {ex.reps}</span>
+                          <li
+                            key={j}
+                            className="flex items-center justify-between gap-3 px-3 py-2.5"
+                          >
+                            <span className="text-sm text-foreground truncate">
+                              {ex.name}
+                            </span>
+                            <div className="flex items-center gap-1.5 shrink-0">
+                              <span className="inline-flex items-baseline gap-1 rounded-md bg-secondary px-2 py-0.5 text-xs tabular-nums">
+                                <span className="font-semibold text-foreground">{ex.sets}</span>
+                                <span className="text-muted-foreground">sets</span>
+                              </span>
+                              <span className="inline-flex items-baseline gap-1 rounded-md bg-accent-warm/15 px-2 py-0.5 text-xs tabular-nums">
+                                <span className="font-semibold text-foreground">{ex.reps}</span>
+                                <span className="text-muted-foreground">reps</span>
+                              </span>
+                            </div>
                           </li>
                         ))}
                       </ul>
