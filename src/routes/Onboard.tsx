@@ -64,9 +64,9 @@ export default function Onboard() {
     }
   };
 
-  const finish = () => {
+  const finish = (target: "/chat" | "/profile/setup" = "/chat") => {
     if (pendingUserId) setUserId(pendingUserId);
-    navigate("/chat");
+    navigate(target);
   };
 
   const toggleExpanded = (i: number) => {
