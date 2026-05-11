@@ -7,7 +7,7 @@ import type { Goal, CurrentActivity, OnboardResponse } from "@/lib/types";
 import { useUser } from "@/lib/user-context";
 import { ChevronDown, ChevronUp } from "lucide-react";
 
-type Step = "goal" | "activity" | "time" | "submitting" | "result" | "error";
+type Step = "name" | "goal" | "activity" | "time" | "submitting" | "result" | "error";
 
 const GOAL_OPTIONS: { value: Goal; label: string }[] = [
   { value: "build_strength", label: "Build strength" },
