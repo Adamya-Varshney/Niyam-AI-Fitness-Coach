@@ -84,6 +84,13 @@ export function postChat(payload: ChatRequest): Promise<ChatResponse> {
   });
 }
 
+export function postProfile(payload: ProfileRequest): Promise<{ ok: true }> {
+  return request<{ ok: true }>("/webhook/profile", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
 export function getState(userId: string): Promise<StateResponse> {
   const qs = new URLSearchParams({ user_id: userId }).toString();
   return request<StateResponse>(`/webhook/state?${qs}`, { method: "GET" });
