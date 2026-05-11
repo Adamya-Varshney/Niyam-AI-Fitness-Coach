@@ -33,6 +33,21 @@ export interface OnboardRequest {
   channel_preference: "in_app";
 }
 
+export type Equipment = "none" | "dumbbells" | "resistance_bands" | "full_gym" | "cardio_machine";
+export type WorkoutStyle = "strength" | "cardio" | "hiit" | "yoga" | "mobility" | "sports";
+
+export interface ProfilePreferences {
+  injuries?: string;
+  equipment?: Equipment[];
+  workout_styles?: WorkoutStyle[];
+  beliefs_diet?: string;
+}
+
+export interface ProfileRequest extends ProfilePreferences {
+  user_id: string;
+}
+
+
 export interface OnboardResponse {
   baseline_plan: BaselinePlan;
   welcome_message: string;
