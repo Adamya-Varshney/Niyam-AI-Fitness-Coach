@@ -126,11 +126,18 @@ export default function ProfileSetup() {
         }
       }
     } finally {
-      // Mark onboarding complete on the user's profile so future logins skip the journey.
+      // Persist preferences + mark onboarding complete on the user's profile row.
       try {
         await supabase
           .from("profiles")
-          .update({ onboarded_at: new Date().toISOString() })
+          .update({
+            injuries: parsed.success ? parsed.data.injuries : injuries,
+            equipment,
+            workout_styles: styles,
+            experience_level: experience ?? null,
+            dietary_preference: diet ?? null,
+            onboarded_at: new Date().toISOString(),
+          })
           .eq("id", userId);
       } catch {
         // non-blocking

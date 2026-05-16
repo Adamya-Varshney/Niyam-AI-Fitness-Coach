@@ -18,26 +18,50 @@ export type Database = {
         Row: {
           avatar_url: string | null
           created_at: string
+          current_activity: string | null
+          dietary_preference: string | null
           display_name: string | null
+          equipment: string[] | null
+          experience_level: string | null
+          goal: string | null
           id: string
+          injuries: string | null
           onboarded_at: string | null
+          time_per_week_min: number | null
           updated_at: string
+          workout_styles: string[] | null
         }
         Insert: {
           avatar_url?: string | null
           created_at?: string
+          current_activity?: string | null
+          dietary_preference?: string | null
           display_name?: string | null
+          equipment?: string[] | null
+          experience_level?: string | null
+          goal?: string | null
           id: string
+          injuries?: string | null
           onboarded_at?: string | null
+          time_per_week_min?: number | null
           updated_at?: string
+          workout_styles?: string[] | null
         }
         Update: {
           avatar_url?: string | null
           created_at?: string
+          current_activity?: string | null
+          dietary_preference?: string | null
           display_name?: string | null
+          equipment?: string[] | null
+          experience_level?: string | null
+          goal?: string | null
           id?: string
+          injuries?: string | null
           onboarded_at?: string | null
+          time_per_week_min?: number | null
           updated_at?: string
+          workout_styles?: string[] | null
         }
         Relationships: []
       }

@@ -4,6 +4,7 @@ import { QuestionCard } from "@/components/QuestionCard";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ApiError, newId, postOnboard } from "@/lib/api";
+import { supabase } from "@/integrations/supabase/client";
 import type {
   CurrentActivity,
   DietaryPreference,
@@ -165,6 +166,25 @@ export default function Onboard() {
         );
       } catch {
         /* ignore */
+      }
+      // Persist the same answers to the database at the user level.
+      try {
+        await supabase
+          .from("profiles")
+          .update({
+            display_name: name.trim() || null,
+            goal,
+            current_activity: activity,
+            time_per_week_min: time,
+            experience_level: experience,
+            workout_styles: [style],
+            equipment: [equipment],
+            injuries: finalInjuries.trim(),
+            dietary_preference: finalDiet,
+          })
+          .eq("id", userId);
+      } catch {
+        /* non-blocking */
       }
       setResult(res);
       setStep("result");
