@@ -186,8 +186,8 @@ export default function Profile() {
                   }
                 />
                 <Row
-                  label="Beliefs / diet"
-                  value={prefs?.beliefs_diet?.trim() || <span className="text-muted-foreground">—</span>}
+                  label="Diet"
+                  value={prefs?.dietary_preference ? DIET_LABEL[prefs.dietary_preference] : <span className="text-muted-foreground">—</span>}
                 />
               </>
             ) : (
