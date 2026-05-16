@@ -107,7 +107,7 @@ function ProgressBar({ step }: { step: Step }) {
 
 export default function Onboard() {
   const navigate = useNavigate();
-  const { setUserId } = useUser();
+  const { userId } = useUser();
   const [step, setStep] = useState<Step>("name");
   const [name, setName] = useState<string>("");
   const [goal, setGoal] = useState<Goal | null>(null);
@@ -119,7 +119,6 @@ export default function Onboard() {
   const [injuries, setInjuries] = useState<string>("");
   const [diet, setDiet] = useState<DietaryPreference | null>(null);
   const [result, setResult] = useState<OnboardResponse | null>(null);
-  const [pendingUserId, setPendingUserId] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string>("");
   const [expanded, setExpanded] = useState<Set<number>>(new Set());
 
@@ -131,8 +130,11 @@ export default function Onboard() {
       setStep("error");
       return;
     }
-    const userId = pendingUserId ?? newId();
-    setPendingUserId(userId);
+    if (!userId) {
+      setErrorMsg("Please sign in to continue.");
+      setStep("error");
+      return;
+    }
     setStep("submitting");
     setErrorMsg("");
     try {
@@ -179,7 +181,7 @@ export default function Onboard() {
   };
 
   const finish = () => {
-    if (pendingUserId) setUserId(pendingUserId);
+    // userId already set via auth session.
     if (result) {
       try {
         window.localStorage.setItem(
