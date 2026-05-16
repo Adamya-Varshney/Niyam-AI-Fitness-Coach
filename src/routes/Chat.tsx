@@ -44,7 +44,7 @@ export default function Chat() {
           kind: t.kind,
         })),
       );
-    } else if (polling.state === null) {
+    } else {
       setMessages([
         {
           id: "welcome",
