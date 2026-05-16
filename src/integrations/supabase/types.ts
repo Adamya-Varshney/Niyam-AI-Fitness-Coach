@@ -21,6 +21,7 @@ export type Database = {
           current_activity: string | null
           dietary_preference: string | null
           display_name: string | null
+          email: string | null
           equipment: string[] | null
           experience_level: string | null
           goal: string | null
@@ -37,6 +38,7 @@ export type Database = {
           current_activity?: string | null
           dietary_preference?: string | null
           display_name?: string | null
+          email?: string | null
           equipment?: string[] | null
           experience_level?: string | null
           goal?: string | null
@@ -53,6 +55,7 @@ export type Database = {
           current_activity?: string | null
           dietary_preference?: string | null
           display_name?: string | null
+          email?: string | null
           equipment?: string[] | null
           experience_level?: string | null
           goal?: string | null

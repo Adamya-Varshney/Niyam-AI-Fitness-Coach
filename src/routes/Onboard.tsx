@@ -171,19 +171,22 @@ export default function Onboard() {
       try {
         await supabase
           .from("profiles")
-          .update({
-            display_name: name.trim() || null,
-            goal,
-            current_activity: activity,
-            time_per_week_min: time,
-            experience_level: experience,
-            workout_styles: [style],
-            equipment: [equipment],
-            injuries: finalInjuries.trim(),
-            dietary_preference: finalDiet,
-            onboarded_at: new Date().toISOString(),
-          })
-          .eq("id", userId);
+          .upsert(
+            {
+              id: userId,
+              display_name: name.trim() || null,
+              goal,
+              current_activity: activity,
+              time_per_week_min: time,
+              experience_level: experience,
+              workout_styles: [style],
+              equipment: [equipment],
+              injuries: finalInjuries.trim(),
+              dietary_preference: finalDiet,
+              onboarded_at: new Date().toISOString(),
+            },
+            { onConflict: "id" },
+          );
       } catch {
         /* non-blocking */
       }
