@@ -218,7 +218,7 @@ export default function Onboard() {
         /* ignore quota */
       }
     }
-    navigate("/profile/setup");
+    navigate("/chat");
   };
 
   const toggleExpanded = (i: number) => {
