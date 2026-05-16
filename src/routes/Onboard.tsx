@@ -113,16 +113,6 @@ export default function Onboard() {
           options={GOAL_OPTIONS}
           onAnswer={(v) => {
             setGoal(v as Goal);
-            setStep("activity");
-          }}
-        />
-      )}
-      {step === "activity" && (
-        <QuestionCard
-          heading="How active are you these days, honestly?"
-          options={ACTIVITY_OPTIONS}
-          onAnswer={(v) => {
-            setActivity(v as CurrentActivity);
             setStep("time");
           }}
         />
@@ -134,7 +124,7 @@ export default function Onboard() {
           onAnswer={(v) => {
             const t = v as number;
             setTime(t);
-            if (goal && activity) void submit(t, goal, activity);
+            if (goal) void submit(t, goal, DEFAULT_ACTIVITY);
           }}
         />
       )}
