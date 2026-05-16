@@ -170,6 +170,16 @@ export default function Profile() {
                   }
                 />
                 <Row
+                  label="Experience"
+                  value={
+                    prefs?.experience_level ? (
+                      EXPERIENCE_LABEL[prefs.experience_level]
+                    ) : (
+                      <span className="text-muted-foreground">—</span>
+                    )
+                  }
+                />
+                <Row
                   label="Beliefs / diet"
                   value={prefs?.beliefs_diet?.trim() || <span className="text-muted-foreground">—</span>}
                 />
