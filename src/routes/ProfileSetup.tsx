@@ -212,15 +212,18 @@ export default function ProfileSetup() {
         </section>
 
         <section className="flex flex-col gap-3">
-          <label className="text-sm font-medium">Health beliefs / dietary approach</label>
-          <Textarea
-            value={beliefs}
-            onChange={(e) => setBeliefs(e.target.value)}
-            placeholder="e.g. vegetarian, intermittent fasting, avoid late workouts"
-            maxLength={500}
-            rows={3}
-            className="rounded-2xl"
-          />
+          <label className="text-sm font-medium">Dietary preference</label>
+          <div className="flex flex-wrap gap-2">
+            {DIET_OPTIONS.map((o) => (
+              <Chip
+                key={o.value}
+                active={diet === o.value}
+                onClick={() => setDiet((prev) => (prev === o.value ? undefined : o.value))}
+              >
+                {o.label}
+              </Chip>
+            ))}
+          </div>
         </section>
 
         {errorMsg && <p className="text-sm text-destructive">{errorMsg}</p>}
