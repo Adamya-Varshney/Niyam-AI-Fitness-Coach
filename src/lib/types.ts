@@ -30,10 +30,21 @@ export interface OnboardRequest {
   goal: Goal;
   current_activity: CurrentActivity;
   time_per_week_min: number;
+  experience_level?: ExperienceLevel;
+  workout_style?: WorkoutStyle;
+  equipment?: Equipment;
+  injuries?: string;
+  dietary_preference?: DietaryPreference;
   channel_preference: "in_app";
 }
 
-export type Equipment = "none" | "dumbbells" | "resistance_bands" | "full_gym" | "cardio_machine";
+export type Equipment =
+  | "none"
+  | "bodyweight"
+  | "dumbbells"
+  | "resistance_bands"
+  | "full_gym"
+  | "cardio_machine";
 export type WorkoutStyle = "strength" | "cardio" | "hiit" | "yoga" | "mobility" | "sports";
 export type ExperienceLevel = "beginner" | "intermediate" | "advanced" | "elite";
 export type DietaryPreference = "vegetarian" | "non_vegetarian" | "vegan";
