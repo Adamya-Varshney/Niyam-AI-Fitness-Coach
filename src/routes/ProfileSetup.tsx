@@ -35,9 +35,10 @@ const profileSchema = z.object({
   injuries: z.string().trim().max(500, "Keep it under 500 characters."),
   equipment: z.array(z.string()).max(EQUIPMENT_OPTIONS.length),
   workout_styles: z.array(z.string()).max(STYLE_OPTIONS.length),
-  experience_level: z
-    .enum(["beginner", "intermediate", "advanced", "elite"])
-    .optional(),
+  experience_level: z.enum(["beginner", "intermediate", "advanced", "elite"], {
+    required_error: "Pick the experience level that fits you best.",
+    invalid_type_error: "Pick the experience level that fits you best.",
+  }),
   beliefs_diet: z.string().trim().max(500, "Keep it under 500 characters."),
 });
 
