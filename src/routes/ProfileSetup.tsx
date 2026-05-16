@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ApiError, postProfile } from "@/lib/api";
 import { useUser } from "@/lib/user-context";
-import type { Equipment, ExperienceLevel, WorkoutStyle } from "@/lib/types";
+import type { DietaryPreference, Equipment, ExperienceLevel, WorkoutStyle } from "@/lib/types";
 
 const EQUIPMENT_OPTIONS: { value: Equipment; label: string }[] = [
   { value: "none", label: "None / bodyweight" },
