@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Link } from "react-router-dom";
+
 import { ApiError, newId, postChat, postNudgeAck } from "@/lib/api";
 import { useStatePolling } from "@/lib/polling";
 import { useUser } from "@/lib/user-context";
@@ -27,7 +27,6 @@ import { ChatBubble } from "@/components/ChatBubble";
 import { TypingIndicator } from "@/components/TypingIndicator";
 import { Composer, type ComposerHandle } from "@/components/Composer";
 import { BackendPlaceholder } from "@/components/BackendPlaceholder";
-import { LayoutDashboard } from "lucide-react";
 
 const COMPOSER_DISABLE_MS = 3000;
 
@@ -213,33 +212,24 @@ export default function Chat() {
   }, [messages]);
 
   return (
-    <main className="flex flex-col h-screen bg-background">
+    <main className="flex flex-col h-[calc(100vh-3rem)] bg-background">
       <header className="border-b border-border/60 bg-background/95 backdrop-blur px-3 py-3">
-        <div className="mx-auto max-w-2xl flex items-start gap-3">
-          <div className="flex-1">
-            {todaySession ? (
-              <TodayCard
-                session={todaySession}
-                why={lastWhy}
-                welcomeBack={welcomeBackVisible ? lastWelcomeBack : null}
-                onDismissWelcome={() => setWelcomeBackVisible(false)}
-              />
-            ) : polling.firstAttemptDone && polling.neverLoaded ? (
-              <BackendPlaceholder
-                title="Your week"
-                message="Live updates coming soon — your onboarding plan is saved and will appear here when the system is fully online."
-              />
-            ) : (
-              <div className="h-16" />
-            )}
-          </div>
-          <Link
-            to="/dashboard"
-            aria-label="Dashboard"
-            className="mt-1 flex items-center justify-center h-9 w-9 rounded-full text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
-          >
-            <LayoutDashboard className="h-4 w-4" />
-          </Link>
+        <div className="mx-auto max-w-2xl">
+          {todaySession ? (
+            <TodayCard
+              session={todaySession}
+              why={lastWhy}
+              welcomeBack={welcomeBackVisible ? lastWelcomeBack : null}
+              onDismissWelcome={() => setWelcomeBackVisible(false)}
+            />
+          ) : polling.firstAttemptDone && polling.neverLoaded ? (
+            <BackendPlaceholder
+              title="Your week"
+              message="Live updates coming soon — your onboarding plan is saved and will appear here when the system is fully online."
+            />
+          ) : (
+            <div className="h-16" />
+          )}
         </div>
       </header>
 
