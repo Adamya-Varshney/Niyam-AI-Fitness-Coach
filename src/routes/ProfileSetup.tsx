@@ -172,6 +172,30 @@ export default function ProfileSetup() {
         </section>
 
         <section className="flex flex-col gap-3">
+          <label className="text-sm font-medium">Experience level with these styles</label>
+          <div className="grid grid-cols-1 gap-2">
+            {EXPERIENCE_OPTIONS.map((o) => {
+              const active = experience === o.value;
+              return (
+                <button
+                  key={o.value}
+                  type="button"
+                  onClick={() => setExperience(active ? undefined : o.value)}
+                  className={`text-left rounded-2xl border px-4 py-3 transition-all duration-200 ${
+                    active
+                      ? "border-primary bg-primary/10"
+                      : "border-border bg-card hover:border-foreground/40"
+                  }`}
+                >
+                  <div className="text-sm font-medium text-foreground">{o.label}</div>
+                  <div className="text-xs text-muted-foreground mt-0.5">{o.description}</div>
+                </button>
+              );
+            })}
+          </div>
+        </section>
+
+        <section className="flex flex-col gap-3">
           <label className="text-sm font-medium">Health beliefs / dietary approach</label>
           <Textarea
             value={beliefs}
