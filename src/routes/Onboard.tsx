@@ -197,7 +197,7 @@ export default function Onboard() {
         /* ignore quota */
       }
     }
-    navigate("/chat");
+    navigate("/profile/setup");
   };
 
   const toggleExpanded = (i: number) => {
@@ -428,7 +428,7 @@ export default function Onboard() {
             </div>
           </div>
           <Button size="lg" onClick={finish} className="rounded-2xl">
-            Continue to chat
+            Continue to your profile
           </Button>
         </div>
       )}
