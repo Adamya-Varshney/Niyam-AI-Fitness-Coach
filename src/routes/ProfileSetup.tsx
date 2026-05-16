@@ -71,6 +71,7 @@ export default function ProfileSetup() {
   const [injuries, setInjuries] = useState("");
   const [equipment, setEquipment] = useState<Equipment[]>([]);
   const [styles, setStyles] = useState<WorkoutStyle[]>([]);
+  const [experience, setExperience] = useState<ExperienceLevel | undefined>(undefined);
   const [beliefs, setBeliefs] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
@@ -83,6 +84,7 @@ export default function ProfileSetup() {
       injuries,
       equipment,
       workout_styles: styles,
+      experience_level: experience,
       beliefs_diet: beliefs,
     });
     if (!parsed.success) {
@@ -96,7 +98,7 @@ export default function ProfileSetup() {
     setSubmitting(true);
     setErrorMsg("");
     try {
-      await postProfile({ user_id: userId, ...parsed.data, equipment, workout_styles: styles });
+      await postProfile({ user_id: userId, ...parsed.data, equipment, workout_styles: styles, experience_level: experience });
     } catch (err) {
       // Non-blocking: persist locally so the UX is functional even if the workflow isn't wired yet.
       if (err instanceof ApiError) {
