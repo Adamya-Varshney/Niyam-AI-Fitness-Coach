@@ -66,10 +66,18 @@ async function request<T>(
   }
   // Some webhooks may return empty body
   const text = await res.text();
-  if (!text) return {} as T;
+  if (!text) {
+    if (opts.strictJson) {
+      throw new ApiError("Empty response body", res.status, "http");
+    }
+    return {} as T;
+  }
   try {
     return JSON.parse(text) as T;
   } catch {
+    if (opts.strictJson) {
+      throw new ApiError("Malformed JSON", res.status, "http", text);
+    }
     return {} as T;
   }
 }
