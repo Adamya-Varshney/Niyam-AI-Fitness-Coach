@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ApiError, postProfile } from "@/lib/api";
 import { useUser } from "@/lib/user-context";
-import type { Equipment, ExperienceLevel, WorkoutStyle } from "@/lib/types";
+import type { DietaryPreference, Equipment, ExperienceLevel, WorkoutStyle } from "@/lib/types";
 
 const EQUIPMENT_OPTIONS: { value: Equipment; label: string }[] = [
   { value: "none", label: "None / bodyweight" },
@@ -31,6 +31,12 @@ const EXPERIENCE_OPTIONS: { value: ExperienceLevel; label: string; description: 
   { value: "elite", label: "Elite", description: "Competitive or coaching-level mastery" },
 ];
 
+const DIET_OPTIONS: { value: DietaryPreference; label: string }[] = [
+  { value: "vegetarian", label: "Vegetarian" },
+  { value: "non_vegetarian", label: "Non-vegetarian" },
+  { value: "vegan", label: "Vegan" },
+];
+
 const profileSchema = z.object({
   injuries: z.string().trim().max(500, "Keep it under 500 characters."),
   equipment: z.array(z.string()).max(EQUIPMENT_OPTIONS.length),
@@ -39,7 +45,7 @@ const profileSchema = z.object({
     required_error: "Pick the experience level that fits you best.",
     invalid_type_error: "Pick the experience level that fits you best.",
   }),
-  beliefs_diet: z.string().trim().max(500, "Keep it under 500 characters."),
+  dietary_preference: z.enum(["vegetarian", "non_vegetarian", "vegan"]).optional(),
 });
 
 function Chip({
@@ -73,7 +79,7 @@ export default function ProfileSetup() {
   const [equipment, setEquipment] = useState<Equipment[]>([]);
   const [styles, setStyles] = useState<WorkoutStyle[]>([]);
   const [experience, setExperience] = useState<ExperienceLevel | undefined>(undefined);
-  const [beliefs, setBeliefs] = useState("");
+  const [diet, setDiet] = useState<DietaryPreference | undefined>(undefined);
   const [submitting, setSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
 
@@ -86,7 +92,7 @@ export default function ProfileSetup() {
       equipment,
       workout_styles: styles,
       experience_level: experience,
-      beliefs_diet: beliefs,
+      dietary_preference: diet,
     });
     if (!parsed.success) {
       setErrorMsg(parsed.error.issues[0]?.message ?? "Please review your inputs.");
@@ -206,15 +212,18 @@ export default function ProfileSetup() {
         </section>
 
         <section className="flex flex-col gap-3">
-          <label className="text-sm font-medium">Health beliefs / dietary approach</label>
-          <Textarea
-            value={beliefs}
-            onChange={(e) => setBeliefs(e.target.value)}
-            placeholder="e.g. vegetarian, intermittent fasting, avoid late workouts"
-            maxLength={500}
-            rows={3}
-            className="rounded-2xl"
-          />
+          <label className="text-sm font-medium">Dietary preference</label>
+          <div className="flex flex-wrap gap-2">
+            {DIET_OPTIONS.map((o) => (
+              <Chip
+                key={o.value}
+                active={diet === o.value}
+                onClick={() => setDiet((prev) => (prev === o.value ? undefined : o.value))}
+              >
+                {o.label}
+              </Chip>
+            ))}
+          </div>
         </section>
 
         {errorMsg && <p className="text-sm text-destructive">{errorMsg}</p>}
