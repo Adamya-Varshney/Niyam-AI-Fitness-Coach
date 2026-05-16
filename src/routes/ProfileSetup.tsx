@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ApiError, postProfile } from "@/lib/api";
 import { useUser } from "@/lib/user-context";
+import { supabase } from "@/integrations/supabase/client";
 import type { DietaryPreference, Equipment, ExperienceLevel, WorkoutStyle } from "@/lib/types";
 
 const EQUIPMENT_OPTIONS: { value: Equipment; label: string }[] = [
@@ -125,6 +126,15 @@ export default function ProfileSetup() {
         }
       }
     } finally {
+      // Mark onboarding complete on the user's profile so future logins skip the journey.
+      try {
+        await supabase
+          .from("profiles")
+          .update({ onboarded_at: new Date().toISOString() })
+          .eq("id", userId);
+      } catch {
+        // non-blocking
+      }
       setSubmitting(false);
       navigate("/chat");
     }
