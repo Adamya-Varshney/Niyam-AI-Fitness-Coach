@@ -31,6 +31,12 @@ const EXPERIENCE_OPTIONS: { value: ExperienceLevel; label: string; description: 
   { value: "elite", label: "Elite", description: "Competitive or coaching-level mastery" },
 ];
 
+const DIET_OPTIONS: { value: DietaryPreference; label: string }[] = [
+  { value: "vegetarian", label: "Vegetarian" },
+  { value: "non_vegetarian", label: "Non-vegetarian" },
+  { value: "vegan", label: "Vegan" },
+];
+
 const profileSchema = z.object({
   injuries: z.string().trim().max(500, "Keep it under 500 characters."),
   equipment: z.array(z.string()).max(EQUIPMENT_OPTIONS.length),
@@ -39,7 +45,7 @@ const profileSchema = z.object({
     required_error: "Pick the experience level that fits you best.",
     invalid_type_error: "Pick the experience level that fits you best.",
   }),
-  beliefs_diet: z.string().trim().max(500, "Keep it under 500 characters."),
+  dietary_preference: z.enum(["vegetarian", "non_vegetarian", "vegan"]).optional(),
 });
 
 function Chip({
