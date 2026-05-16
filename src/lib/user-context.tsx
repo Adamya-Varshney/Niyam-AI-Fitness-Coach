@@ -1,29 +1,44 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import type { Session, User } from "@supabase/supabase-js";
+import { supabase } from "@/integrations/supabase/client";
 
 interface UserContextValue {
   userId: string | null;
-  setUserId: (id: string | null) => void;
+  user: User | null;
+  session: Session | null;
+  loading: boolean;
+  signOut: () => Promise<void>;
 }
 
-const STORAGE_KEY = "fc_user_id";
 const UserContext = createContext<UserContextValue | undefined>(undefined);
 
 export function UserProvider({ children }: { children: ReactNode }) {
-  const [userId, setUserIdState] = useState<string | null>(() => {
-    if (typeof window === "undefined") return null;
-    return window.localStorage.getItem(STORAGE_KEY);
-  });
+  const [session, setSession] = useState<Session | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (userId) window.localStorage.setItem(STORAGE_KEY, userId);
-    else window.localStorage.removeItem(STORAGE_KEY);
-  }, [userId]);
+    // Set listener BEFORE getSession (per Supabase guidance).
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, s) => {
+      setSession(s);
+    });
+    supabase.auth.getSession().then(({ data }) => {
+      setSession(data.session);
+      setLoading(false);
+    });
+    return () => sub.subscription.unsubscribe();
+  }, []);
 
-  return (
-    <UserContext.Provider value={{ userId, setUserId: setUserIdState }}>
-      {children}
-    </UserContext.Provider>
-  );
+  const value: UserContextValue = {
+    userId: session?.user?.id ?? null,
+    user: session?.user ?? null,
+    session,
+    loading,
+    signOut: async () => {
+      await supabase.auth.signOut();
+    },
+  };
+
+  return <UserContext.Provider value={value}>{children}</UserContext.Provider>;
 }
 
 export function useUser(): UserContextValue {
