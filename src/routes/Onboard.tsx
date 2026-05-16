@@ -449,7 +449,7 @@ export default function Onboard() {
             </div>
           </div>
           <Button size="lg" onClick={finish} className="rounded-2xl">
-            Continue to your profile
+            Start chatting with your coach
           </Button>
         </div>
       )}
