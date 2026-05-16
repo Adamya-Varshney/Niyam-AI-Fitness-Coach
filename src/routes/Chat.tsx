@@ -196,7 +196,14 @@ export default function Chat() {
     void send(m.retryPayload.message, m.retryPayload.message_type);
   };
 
-  const todaySession = polling.state?.today_session;
+  const seedSession = useMemo<SessionPlan | undefined>(() => {
+    const seed = readOnboardSeed();
+    const sessions = seed?.baseline_plan?.sessions ?? [];
+    if (sessions.length === 0) return undefined;
+    const today = sessions.find((s) => s.status === "today");
+    return today ?? sessions[0];
+  }, []);
+  const todaySession = polling.state?.today_session ?? seedSession;
   const lastWhy = useMemo(() => {
     for (let i = messages.length - 1; i >= 0; i--) {
       const m = messages[i];
