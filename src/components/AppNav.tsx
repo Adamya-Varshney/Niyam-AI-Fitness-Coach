@@ -13,10 +13,9 @@ export function AppNav() {
   const { pathname } = useLocation();
   const navigate = useNavigate();
   const { userId, signOut } = useUser();
-  // Hide nav during onboarding / setup / auth flows
+  // Hide nav only on unauthenticated routes
   if (
-    pathname.startsWith("/onboard") ||
-    pathname.startsWith("/profile/setup") ||
+    !userId ||
     pathname.startsWith("/auth") ||
     pathname.startsWith("/reset-password")
   ) {
