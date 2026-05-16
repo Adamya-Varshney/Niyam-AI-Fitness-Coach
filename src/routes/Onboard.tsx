@@ -7,7 +7,9 @@ import type { Goal, CurrentActivity, OnboardResponse } from "@/lib/types";
 import { useUser } from "@/lib/user-context";
 import { ChevronDown, ChevronUp } from "lucide-react";
 
-type Step = "name" | "goal" | "activity" | "time" | "submitting" | "result" | "error";
+type Step = "name" | "goal" | "time" | "submitting" | "result" | "error";
+
+const DEFAULT_ACTIVITY: CurrentActivity = "few_times_week";
 
 const GOAL_OPTIONS: { value: Goal; label: string }[] = [
   { value: "build_strength", label: "Build strength" },
@@ -16,20 +18,12 @@ const GOAL_OPTIONS: { value: Goal; label: string }[] = [
   { value: "move_more", label: "Move more" },
 ];
 
-const ACTIVITY_OPTIONS: { value: CurrentActivity; label: string }[] = [
-  { value: "rarely", label: "Rarely" },
-  { value: "weekend_only", label: "Weekend only" },
-  { value: "few_times_week", label: "A few times a week" },
-  { value: "most_days", label: "Most days" },
-];
-
 export default function Onboard() {
   const navigate = useNavigate();
   const { setUserId } = useUser();
   const [step, setStep] = useState<Step>("name");
   const [name, setName] = useState<string>("");
   const [goal, setGoal] = useState<Goal | null>(null);
-  const [activity, setActivity] = useState<CurrentActivity | null>(null);
   const [time, setTime] = useState<number>(180);
   const [result, setResult] = useState<OnboardResponse | null>(null);
   const [pendingUserId, setPendingUserId] = useState<string | null>(null);
@@ -111,16 +105,6 @@ export default function Onboard() {
           options={GOAL_OPTIONS}
           onAnswer={(v) => {
             setGoal(v as Goal);
-            setStep("activity");
-          }}
-        />
-      )}
-      {step === "activity" && (
-        <QuestionCard
-          heading="How active are you these days, honestly?"
-          options={ACTIVITY_OPTIONS}
-          onAnswer={(v) => {
-            setActivity(v as CurrentActivity);
             setStep("time");
           }}
         />
@@ -132,7 +116,7 @@ export default function Onboard() {
           onAnswer={(v) => {
             const t = v as number;
             setTime(t);
-            if (goal && activity) void submit(t, goal, activity);
+            if (goal) void submit(t, goal, DEFAULT_ACTIVITY);
           }}
         />
       )}
@@ -147,7 +131,7 @@ export default function Onboard() {
           <div className="font-display text-2xl">Almost there</div>
           <p className="text-sm text-muted-foreground">{errorMsg}</p>
           <Button
-            onClick={() => goal && activity && submit(time, goal, activity)}
+            onClick={() => goal && submit(time, goal, DEFAULT_ACTIVITY)}
             className="rounded-2xl w-fit"
           >
             Try again
@@ -225,17 +209,12 @@ export default function Onboard() {
             </div>
           </div>
           <div className="flex flex-col gap-2">
-            <Button size="lg" onClick={() => finish("/chat")} className="rounded-2xl">
-              Let's go
+            <Button size="lg" onClick={() => finish("/profile/setup")} className="rounded-2xl">
+              Continue to your profile
             </Button>
-            <Button
-              variant="ghost"
-              size="lg"
-              onClick={() => finish("/profile/setup")}
-              className="rounded-2xl text-muted-foreground hover:text-foreground"
-            >
-              Complete your profile (optional)
-            </Button>
+            <p className="text-xs text-muted-foreground text-center">
+              One quick step left — tell us your experience level.
+            </p>
           </div>
         </div>
       )}

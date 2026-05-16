@@ -35,9 +35,10 @@ const profileSchema = z.object({
   injuries: z.string().trim().max(500, "Keep it under 500 characters."),
   equipment: z.array(z.string()).max(EQUIPMENT_OPTIONS.length),
   workout_styles: z.array(z.string()).max(STYLE_OPTIONS.length),
-  experience_level: z
-    .enum(["beginner", "intermediate", "advanced", "elite"])
-    .optional(),
+  experience_level: z.enum(["beginner", "intermediate", "advanced", "elite"], {
+    required_error: "Pick the experience level that fits you best.",
+    invalid_type_error: "Pick the experience level that fits you best.",
+  }),
   beliefs_diet: z.string().trim().max(500, "Keep it under 500 characters."),
 });
 
@@ -98,7 +99,13 @@ export default function ProfileSetup() {
     setSubmitting(true);
     setErrorMsg("");
     try {
-      await postProfile({ user_id: userId, ...parsed.data, equipment, workout_styles: styles, experience_level: experience });
+      await postProfile({
+        user_id: userId,
+        ...parsed.data,
+        equipment,
+        workout_styles: styles,
+        experience_level: parsed.data.experience_level!,
+      });
     } catch (err) {
       // Non-blocking: persist locally so the UX is functional even if the workflow isn't wired yet.
       if (err instanceof ApiError) {
@@ -122,10 +129,11 @@ export default function ProfileSetup() {
       <div className="fade-in mx-auto w-full max-w-md flex flex-col gap-8 px-6 py-12">
         <header className="flex flex-col gap-2">
           <h1 className="font-display text-3xl sm:text-4xl leading-tight">
-            Help us tailor it further
+            A few last details
           </h1>
           <p className="text-sm text-muted-foreground">
-            All fields are optional. Skip anything that doesn't apply.
+            Pick your experience level so the coach calibrates intensity. Everything
+            else is optional — skip what doesn't apply.
           </p>
         </header>
 
@@ -172,7 +180,9 @@ export default function ProfileSetup() {
         </section>
 
         <section className="flex flex-col gap-3">
-          <label className="text-sm font-medium">Experience level with these styles</label>
+          <label className="text-sm font-medium">
+            Experience level <span className="text-destructive">*</span>
+          </label>
           <div className="grid grid-cols-1 gap-2">
             {EXPERIENCE_OPTIONS.map((o) => {
               const active = experience === o.value;
@@ -180,7 +190,7 @@ export default function ProfileSetup() {
                 <button
                   key={o.value}
                   type="button"
-                  onClick={() => setExperience(active ? undefined : o.value)}
+                  onClick={() => setExperience(o.value)}
                   className={`text-left rounded-2xl border px-4 py-3 transition-all duration-200 ${
                     active
                       ? "border-primary bg-primary/10"
@@ -210,17 +220,13 @@ export default function ProfileSetup() {
         {errorMsg && <p className="text-sm text-destructive">{errorMsg}</p>}
 
         <div className="flex flex-col gap-2">
-          <Button size="lg" className="rounded-2xl" onClick={save} disabled={submitting}>
-            {submitting ? "Saving…" : "Save & continue"}
-          </Button>
           <Button
-            variant="ghost"
             size="lg"
-            className="rounded-2xl text-muted-foreground hover:text-foreground"
-            onClick={() => navigate("/chat")}
-            disabled={submitting}
+            className="rounded-2xl"
+            onClick={save}
+            disabled={submitting || !experience}
           >
-            Skip for now
+            {submitting ? "Saving…" : "Save & continue to chat"}
           </Button>
         </div>
       </div>

@@ -41,7 +41,7 @@ export interface ProfilePreferences {
   injuries?: string;
   equipment?: Equipment[];
   workout_styles?: WorkoutStyle[];
-  experience_level?: ExperienceLevel;
+  experience_level: ExperienceLevel;
   beliefs_diet?: string;
 }
 

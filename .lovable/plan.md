@@ -1,83 +1,45 @@
-## Findings on the Respond to Webhook node
+## Goal
 
-Two concrete issues are visible in the screenshot. Together they explain why some submissions return an empty body while others return the full `baseline_plan`.
+One linear user journey, no skippable steps:
 
-### Issue 1: `JSON.stringify(...)` is wrong when "Respond With" = JSON
-
-```text
-Respond With: JSON
-Response Body: {{ JSON.stringify({ baseline_plan: ..., welcome_message: ..., ... }) }}
+```
+Name → Goal → Time per week → Profile (incl. required experience level) → Chat
 ```
 
-When **Respond With** is set to **JSON**, n8n already serializes the expression result to JSON. Wrapping it in `JSON.stringify(...)` double-encodes it — the HTTP body becomes a *JSON string* (a quoted blob), not a JSON object. The client's `JSON.parse` then yields a string, and `result.baseline_plan` is `undefined` → fallback message shows.
+The four experience levels (Beginner, Intermediate, Advanced, Elite) become a mandatory attribute of every user.
 
-**Fix:** remove `JSON.stringify(...)`. The Response Body should be the raw object expression:
+## Changes
 
-```text
-{{ {
-  baseline_plan: JSON.parse($('OpenAI').item.json.output[0].content[0].text).baseline_plan,
-  welcome_message: JSON.parse($('OpenAI').item.json.output[0].content[0].text).welcome_message,
-  first_check_in_at: $('Code').item.json.created_at
-} }}
-```
+### 1. Onboarding flow (`src/routes/Onboard.tsx`)
+- Remove the "current activity" step from the visible flow. Send a sensible default (`few_times_week`) to the onboard webhook so the backend contract stays unchanged.
+- New step order: `name → goal → time → submitting → result`.
+- On the result screen, collapse the two buttons into a single primary CTA **"Continue to your profile"** that routes to `/profile/setup`. Remove the "Let's go / Skip" split so the journey is linear.
 
-Alternatively, switch **Respond With** to **Text** and keep `JSON.stringify(...)` — but the JSON-mode fix above is cleaner.
+### 2. Profile setup (`src/routes/ProfileSetup.tsx`)
+- Reframe copy: this is step 4 of onboarding, not an optional add-on. Header becomes "A few last details" with subtitle explaining experience level is required, others optional.
+- Make `experience_level` **required**:
+  - zod schema: drop `.optional()`, add a friendly `required_error`.
+  - Save button disabled until an experience level is selected.
+  - Show inline validation if the user tries to save without it.
+- Remove the "Skip for now" ghost button (no skipping the journey).
+- After save (success or local-fallback), navigate to `/chat` as today.
+- The Profile page edit-in-place flow (entered from `/profile`) keeps the same form; the "required" rule still applies there.
 
-### Issue 2: "Only runs for the first item in the input data"
+### 3. Types (`src/lib/types.ts`)
+- Change `experience_level` on `ProfilePreferences` from optional to required.
+- Anywhere this widens existing reads (Profile.tsx, Chat seed), guard with `prefs.experience_level ?? undefined` so older localStorage payloads without the field don't crash.
 
-The yellow banner in the node says:
+### 4. Profile page (`src/routes/Profile.tsx`)
+- Since experience is now part of the core profile, surface it more prominently (move it above the optional sections). If a legacy user has no value stored, show a one-line "Set your experience level" prompt linking to `/profile/setup`.
 
-> When using expressions, note that this node will only run for the first item in the input data.
+### 5. App routing (`src/App.tsx`)
+- `AppNav` continues to hide on `/onboard` and `/profile/setup` so the linear flow is undistracted.
+- No new routes needed.
 
-The node is downstream of a **Merge** node that emits multiple items (user_id, week_number, plan_json, adherence rows, etc.). If the *first* item coming out of Merge does not have a populated `$('OpenAI').item.json.output[0].content[0].text`, the expression silently resolves to `undefined` and the response body is effectively empty — which matches exactly the symptom seen for `build_strength + few_times_week + 240` but not for `get_lean + rarely + 120`.
+### Out of scope
+- N8N webhook payloads/endpoints stay exactly as they are. Only the client-side journey and the required-ness of `experience_level` change.
+- No backend/business-logic changes; this is UX wiring only.
 
-This is branch-dependent because the Merge node's item ordering depends on which upstream branches fired and in what order.
+## Result
 
-**Fix options (pick one):**
-
-1. **Reference OpenAI directly with a guard**, not via the merged first item:
-   ```text
-   {{ {
-     baseline_plan: $('OpenAI').first().json.output[0].content[0].text
-       ? JSON.parse($('OpenAI').first().json.output[0].content[0].text).baseline_plan
-       : null,
-     welcome_message: $('OpenAI').first().json.output[0].content[0].text
-       ? JSON.parse($('OpenAI').first().json.output[0].content[0].text).welcome_message
-       : null,
-     first_check_in_at: $('Code').first().json.created_at
-   } }}
-   ```
-   Using `.first()` instead of `.item` makes it independent of which Merge item is "current".
-
-2. **Move "Respond to Webhook" to a dedicated branch** that only takes the OpenAI output (not the merged sheet rows), so its single input item always has the OpenAI payload.
-
-3. **Add a Set/Code node before Respond** that collapses everything into a single, predictable item with the three fields already extracted. Then the Respond node just echoes that one item.
-
-### Headers (already correct)
-
-```text
-Access-Control-Allow-Headers: Content-Type, Authorization
-Access-Control-Allow-Methods: POST, OPTIONS
-Access-Control-Allow-Origin: *   ← visible at the bottom of the screenshot
-```
-
-These are fine. No app-side change needed for headers.
-
-### Summary of n8n-side changes
-
-1. Remove the outer `JSON.stringify(...)` from Response Body.
-2. Replace `$('OpenAI').item.json...` with `$('OpenAI').first().json...` (and same for `$('Code')`) so the response no longer depends on Merge item ordering.
-3. Re-deploy the workflow and retest with both:
-   - `get_lean + rarely + 120` (previously worked)
-   - `build_strength + few_times_week + 240` (previously empty)
-
-Both should now return the full `{ baseline_plan, welcome_message, first_check_in_at }` object.
-
-### App side
-
-No code change required once the workflow is fixed. The current `src/lib/api.ts` already:
-- sends `Content-Type: application/json`
-- parses the JSON response
-- falls back gracefully on empty body
-
-If you want, after the n8n fix is verified I can also harden `Onboard.tsx` to show a clearer message when `baseline_plan.sessions` is missing (instead of the generic "system warms up" copy). Let me know.
+After approval, a brand-new user can only reach `/chat` by completing Name → Goal → Time → Profile (with an experience level chosen). Returning users still land directly on `/chat` via `RootRedirect`.
