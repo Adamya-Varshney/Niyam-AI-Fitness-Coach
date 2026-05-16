@@ -107,7 +107,7 @@ function ProgressBar({ step }: { step: Step }) {
 
 export default function Onboard() {
   const navigate = useNavigate();
-  const { setUserId } = useUser();
+  const { userId } = useUser();
   const [step, setStep] = useState<Step>("name");
   const [name, setName] = useState<string>("");
   const [goal, setGoal] = useState<Goal | null>(null);
@@ -119,7 +119,6 @@ export default function Onboard() {
   const [injuries, setInjuries] = useState<string>("");
   const [diet, setDiet] = useState<DietaryPreference | null>(null);
   const [result, setResult] = useState<OnboardResponse | null>(null);
-  const [pendingUserId, setPendingUserId] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string>("");
   const [expanded, setExpanded] = useState<Set<number>>(new Set());
 
