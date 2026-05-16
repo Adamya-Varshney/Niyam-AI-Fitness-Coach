@@ -99,7 +99,13 @@ export default function ProfileSetup() {
     setSubmitting(true);
     setErrorMsg("");
     try {
-      await postProfile({ user_id: userId, ...parsed.data, equipment, workout_styles: styles });
+      await postProfile({
+        user_id: userId,
+        ...parsed.data,
+        equipment,
+        workout_styles: styles,
+        experience_level: parsed.data.experience_level!,
+      });
     } catch (err) {
       // Non-blocking: persist locally so the UX is functional even if the workflow isn't wired yet.
       if (err instanceof ApiError) {
