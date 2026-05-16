@@ -131,7 +131,7 @@ export default function Onboard() {
           <div className="font-display text-2xl">Almost there</div>
           <p className="text-sm text-muted-foreground">{errorMsg}</p>
           <Button
-            onClick={() => goal && activity && submit(time, goal, activity)}
+            onClick={() => goal && submit(time, goal, DEFAULT_ACTIVITY)}
             className="rounded-2xl w-fit"
           >
             Try again
