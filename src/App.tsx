@@ -41,7 +41,7 @@ const App = () => (
             <Route path="/" element={<RootRedirect />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/reset-password" element={<ResetPassword />} />
-            <Route path="/onboard" element={<RequireAuth><Onboard /></RequireAuth>} />
+            <Route path="/onboard" element={<RequireAuth><OnboardGate /></RequireAuth>} />
             <Route path="/chat" element={<RequireAuth requireOnboarded><Chat /></RequireAuth>} />
             <Route path="/dashboard" element={<RequireAuth requireOnboarded><Dashboard /></RequireAuth>} />
             <Route path="/profile" element={<RequireAuth requireOnboarded><Profile /></RequireAuth>} />
