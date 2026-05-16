@@ -1,17 +1,67 @@
 import { Link } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
 import { useStatePolling } from "@/lib/polling";
 import { useUser } from "@/lib/user-context";
 import { TodayCard } from "@/components/TodayCard";
 import { BackendPlaceholder } from "@/components/BackendPlaceholder";
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
+import type { BaselinePlan, SessionPlan } from "@/lib/types";
+
+interface OnboardSeed {
+  name?: string;
+  welcome_message?: string;
+  baseline_plan?: BaselinePlan;
+  ts?: number;
+}
+
+const DAY_ALIASES: Record<string, number> = {
+  sun: 0, sunday: 0,
+  mon: 1, monday: 1,
+  tue: 2, tues: 2, tuesday: 2,
+  wed: 3, weds: 3, wednesday: 3,
+  thu: 4, thur: 4, thurs: 4, thursday: 4,
+  fri: 5, friday: 5,
+  sat: 6, saturday: 6,
+};
+
+function dayIndex(day?: string): number | null {
+  if (!day) return null;
+  const k = day.trim().toLowerCase().replace(/\.$/, "");
+  return DAY_ALIASES[k] ?? null;
+}
 
 export default function Dashboard() {
   const { userId } = useUser();
   const { state, firstAttemptDone, neverLoaded } = useStatePolling(userId);
+  const [seed, setSeed] = useState<OnboardSeed | null>(null);
 
-  const todaySession = state?.today_session;
-  const sessions = state?.current_plan?.sessions ?? [];
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem("fc_onboard_seed");
+      if (raw) setSeed(JSON.parse(raw) as OnboardSeed);
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
+  const sessions: SessionPlan[] = useMemo(() => {
+    const fromState = state?.current_plan?.sessions ?? [];
+    if (fromState.length > 0) return fromState;
+    return seed?.baseline_plan?.sessions ?? [];
+  }, [state, seed]);
+
+  const todaySession: SessionPlan | undefined = useMemo(() => {
+    if (state?.today_session) return state.today_session;
+    if (sessions.length === 0) return undefined;
+    const todayIdx = new Date().getDay();
+    const match = sessions.find((s) => dayIndex(s.day) === todayIdx);
+    if (match) return match;
+    const flagged = sessions.find((s) => s.status === "today");
+    return flagged ?? sessions[0];
+  }, [state, sessions]);
+
+  const todayIdx = new Date().getDay();
   const adherence = state?.adherence_summary;
 
   return (
@@ -42,7 +92,7 @@ export default function Dashboard() {
           ) : firstAttemptDone && neverLoaded ? (
             <BackendPlaceholder
               title="Your week"
-              message="Live updates coming soon — your onboarding plan is saved and will appear here when the system is fully online."
+              message="Complete onboarding to see today's session here."
             />
           ) : (
             <div className="h-24 rounded-2xl bg-secondary/40" />
@@ -56,9 +106,15 @@ export default function Dashboard() {
             <ul className="rounded-2xl bg-card border border-border/60 divide-y divide-border/60 overflow-hidden">
               {sessions.map((s, i) => {
                 const focus = s.focus ?? s.type ?? "Session";
-                const status = s.status ?? "pending";
+                const isToday = dayIndex(s.day) === todayIdx;
+                const status = s.status ?? (isToday ? "today" : "pending");
                 return (
-                  <li key={i} className="flex items-center justify-between px-4 py-3 text-sm">
+                  <li
+                    key={i}
+                    className={`flex items-center justify-between px-4 py-3 text-sm ${
+                      isToday ? "bg-accent-warm/10" : ""
+                    }`}
+                  >
                     <div className="flex items-center gap-3 min-w-0">
                       <span className="text-muted-foreground w-10 shrink-0">{s.day}</span>
                       <span className="truncate">{focus}</span>
@@ -81,7 +137,7 @@ export default function Dashboard() {
             </ul>
           ) : firstAttemptDone && neverLoaded ? (
             <p className="text-sm text-muted-foreground">
-              Your weekly view will populate as the system goes live.
+              Your weekly plan will appear here once onboarding completes.
             </p>
           ) : (
             <div className="h-32 rounded-2xl bg-secondary/40" />
