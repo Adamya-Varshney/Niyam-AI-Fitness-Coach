@@ -4,6 +4,7 @@ import { QuestionCard } from "@/components/QuestionCard";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ApiError, newId, postOnboard } from "@/lib/api";
+import { supabase } from "@/integrations/supabase/client";
 import type {
   CurrentActivity,
   DietaryPreference,
