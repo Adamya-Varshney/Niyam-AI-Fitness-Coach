@@ -214,17 +214,13 @@ export default function ProfileSetup() {
         {errorMsg && <p className="text-sm text-destructive">{errorMsg}</p>}
 
         <div className="flex flex-col gap-2">
-          <Button size="lg" className="rounded-2xl" onClick={save} disabled={submitting}>
-            {submitting ? "Saving…" : "Save & continue"}
-          </Button>
           <Button
-            variant="ghost"
             size="lg"
-            className="rounded-2xl text-muted-foreground hover:text-foreground"
-            onClick={() => navigate("/chat")}
-            disabled={submitting}
+            className="rounded-2xl"
+            onClick={save}
+            disabled={submitting || !experience}
           >
-            Skip for now
+            {submitting ? "Saving…" : "Save & continue to chat"}
           </Button>
         </div>
       </div>
