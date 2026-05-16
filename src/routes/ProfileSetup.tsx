@@ -79,7 +79,7 @@ export default function ProfileSetup() {
   const [equipment, setEquipment] = useState<Equipment[]>([]);
   const [styles, setStyles] = useState<WorkoutStyle[]>([]);
   const [experience, setExperience] = useState<ExperienceLevel | undefined>(undefined);
-  const [beliefs, setBeliefs] = useState("");
+  const [diet, setDiet] = useState<DietaryPreference | undefined>(undefined);
   const [submitting, setSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
 
@@ -92,7 +92,7 @@ export default function ProfileSetup() {
       equipment,
       workout_styles: styles,
       experience_level: experience,
-      beliefs_diet: beliefs,
+      dietary_preference: diet,
     });
     if (!parsed.success) {
       setErrorMsg(parsed.error.issues[0]?.message ?? "Please review your inputs.");
