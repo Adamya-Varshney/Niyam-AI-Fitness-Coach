@@ -28,6 +28,13 @@ function RootRedirect() {
   return <Navigate to={onboarding === "complete" ? "/chat" : "/onboard"} replace />;
 }
 
+function OnboardGate() {
+  const onboarding = useOnboardingStatus();
+  if (onboarding === "loading") return null;
+  if (onboarding === "complete") return <Navigate to="/chat" replace />;
+  return <Onboard />;
+}
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
@@ -41,7 +48,7 @@ const App = () => (
             <Route path="/" element={<RootRedirect />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/reset-password" element={<ResetPassword />} />
-            <Route path="/onboard" element={<RequireAuth><Onboard /></RequireAuth>} />
+            <Route path="/onboard" element={<RequireAuth><OnboardGate /></RequireAuth>} />
             <Route path="/chat" element={<RequireAuth requireOnboarded><Chat /></RequireAuth>} />
             <Route path="/dashboard" element={<RequireAuth requireOnboarded><Dashboard /></RequireAuth>} />
             <Route path="/profile" element={<RequireAuth requireOnboarded><Profile /></RequireAuth>} />
