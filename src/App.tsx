@@ -28,6 +28,13 @@ function RootRedirect() {
   return <Navigate to={onboarding === "complete" ? "/chat" : "/onboard"} replace />;
 }
 
+function OnboardGate() {
+  const onboarding = useOnboardingStatus();
+  if (onboarding === "loading") return null;
+  if (onboarding === "complete") return <Navigate to="/chat" replace />;
+  return <Onboard />;
+}
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
