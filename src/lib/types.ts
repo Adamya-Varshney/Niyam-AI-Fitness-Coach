@@ -35,11 +35,13 @@ export interface OnboardRequest {
 
 export type Equipment = "none" | "dumbbells" | "resistance_bands" | "full_gym" | "cardio_machine";
 export type WorkoutStyle = "strength" | "cardio" | "hiit" | "yoga" | "mobility" | "sports";
+export type ExperienceLevel = "beginner" | "intermediate" | "advanced" | "elite";
 
 export interface ProfilePreferences {
   injuries?: string;
   equipment?: Equipment[];
   workout_styles?: WorkoutStyle[];
+  experience_level?: ExperienceLevel;
   beliefs_diet?: string;
 }
 
