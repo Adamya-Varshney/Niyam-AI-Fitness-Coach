@@ -63,11 +63,17 @@ export default function Chat() {
         })),
       );
     } else {
+      const seed = readOnboardSeed();
+      const greeting =
+        seed?.welcome_message?.trim() ||
+        (seed?.name
+          ? `Hi ${seed.name} — your week is ready. Tell me how today's going.`
+          : "Hi — I'm here. Tell me how today's going.");
       setMessages([
         {
           id: "welcome",
           role: "agent",
-          text: "Hi — I'm here. Tell me how today's going.",
+          text: greeting,
         },
       ]);
     }
