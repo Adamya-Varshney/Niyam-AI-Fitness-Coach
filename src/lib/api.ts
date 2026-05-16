@@ -90,10 +90,11 @@ export function postOnboard(payload: OnboardRequest): Promise<OnboardResponse> {
 }
 
 export function postChat(payload: ChatRequest): Promise<ChatResponse> {
-  return request<ChatResponse>("/webhook/chat", {
-    method: "POST",
-    body: JSON.stringify(payload),
-  });
+  return request<ChatResponse>(
+    "/webhook/chat",
+    { method: "POST", body: JSON.stringify(payload) },
+    { timeoutMs: 8_000, strictJson: true },
+  );
 }
 
 export function postProfile(payload: ProfileRequest): Promise<{ ok: true }> {
