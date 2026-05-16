@@ -130,8 +130,11 @@ export default function Onboard() {
       setStep("error");
       return;
     }
-    const userId = pendingUserId ?? newId();
-    setPendingUserId(userId);
+    if (!userId) {
+      setErrorMsg("Please sign in to continue.");
+      setStep("error");
+      return;
+    }
     setStep("submitting");
     setErrorMsg("");
     try {
@@ -178,7 +181,7 @@ export default function Onboard() {
   };
 
   const finish = () => {
-    if (pendingUserId) setUserId(pendingUserId);
+    // userId already set via auth session.
     if (result) {
       try {
         window.localStorage.setItem(
