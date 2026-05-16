@@ -181,6 +181,7 @@ export default function Onboard() {
             equipment: [equipment],
             injuries: finalInjuries.trim(),
             dietary_preference: finalDiet,
+            onboarded_at: new Date().toISOString(),
           })
           .eq("id", userId);
       } catch {
@@ -217,7 +218,7 @@ export default function Onboard() {
         /* ignore quota */
       }
     }
-    navigate("/profile/setup");
+    navigate("/chat");
   };
 
   const toggleExpanded = (i: number) => {
@@ -448,7 +449,7 @@ export default function Onboard() {
             </div>
           </div>
           <Button size="lg" onClick={finish} className="rounded-2xl">
-            Continue to your profile
+            Start chatting with your coach
           </Button>
         </div>
       )}
