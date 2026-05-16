@@ -16,7 +16,11 @@ export function SectionPager() {
   const { pathname } = useLocation();
   const navigate = useNavigate();
 
-  if (pathname === "/" || HIDDEN_PREFIXES.some((p) => pathname.startsWith(p))) {
+  if (
+    pathname === "/" ||
+    HIDDEN_PREFIXES.some((p) => pathname.startsWith(p)) ||
+    HIDDEN_ON_PATHS.some((p) => pathname === p || pathname.startsWith(p + "/"))
+  ) {
     return null;
   }
 
