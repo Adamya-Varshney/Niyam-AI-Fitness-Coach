@@ -1,6 +1,7 @@
-import { NavLink, useLocation } from "react-router-dom";
-import { MessageCircle, LayoutDashboard, User, Sparkles } from "lucide-react";
+import { NavLink, useLocation, useNavigate } from "react-router-dom";
+import { MessageCircle, LayoutDashboard, User, Sparkles, LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useUser } from "@/lib/user-context";
 
 const TABS = [
   { to: "/chat", label: "Chat", icon: MessageCircle },
@@ -10,10 +11,22 @@ const TABS = [
 
 export function AppNav() {
   const { pathname } = useLocation();
-  // Hide nav during onboarding / setup flows
-  if (pathname.startsWith("/onboard") || pathname.startsWith("/profile/setup")) {
+  const navigate = useNavigate();
+  const { userId, signOut } = useUser();
+  // Hide nav during onboarding / setup / auth flows
+  if (
+    pathname.startsWith("/onboard") ||
+    pathname.startsWith("/profile/setup") ||
+    pathname.startsWith("/auth") ||
+    pathname.startsWith("/reset-password")
+  ) {
     return null;
   }
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate("/auth", { replace: true });
+  };
 
   return (
     <nav
@@ -44,6 +57,19 @@ export function AppNav() {
               </NavLink>
             </li>
           ))}
+          {userId && (
+            <li>
+              <button
+                type="button"
+                onClick={handleSignOut}
+                className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+                aria-label="Sign out"
+              >
+                <LogOut className="h-3.5 w-3.5" aria-hidden="true" />
+                <span>Sign out</span>
+              </button>
+            </li>
+          )}
         </ul>
       </div>
     </nav>

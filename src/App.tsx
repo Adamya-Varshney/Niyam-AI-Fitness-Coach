@@ -9,14 +9,21 @@ import Chat from "./routes/Chat.tsx";
 import Dashboard from "./routes/Dashboard.tsx";
 import Profile from "./routes/Profile.tsx";
 import ProfileSetup from "./routes/ProfileSetup.tsx";
+import Auth from "./routes/Auth.tsx";
+import ResetPassword from "./routes/ResetPassword.tsx";
 import { UserProvider, useUser } from "./lib/user-context";
 import { AppNav } from "./components/AppNav";
+import { RequireAuth } from "./components/RequireAuth";
 
 const queryClient = new QueryClient();
 
 function RootRedirect() {
-  const { userId } = useUser();
-  return <Navigate to={userId ? "/chat" : "/onboard"} replace />;
+  const { userId, loading } = useUser();
+  if (loading) return null;
+  if (!userId) return <Navigate to="/auth" replace />;
+  // Send to chat if onboarding seed exists, else onboard.
+  const seeded = typeof window !== "undefined" && window.localStorage.getItem("fc_onboard_seed");
+  return <Navigate to={seeded ? "/chat" : "/onboard"} replace />;
 }
 
 const App = () => (
@@ -29,11 +36,13 @@ const App = () => (
           <AppNav />
           <Routes>
             <Route path="/" element={<RootRedirect />} />
-            <Route path="/onboard" element={<Onboard />} />
-            <Route path="/chat" element={<Chat />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/profile" element={<Profile />} />
-            <Route path="/profile/setup" element={<ProfileSetup />} />
+            <Route path="/auth" element={<Auth />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
+            <Route path="/onboard" element={<RequireAuth><Onboard /></RequireAuth>} />
+            <Route path="/chat" element={<RequireAuth><Chat /></RequireAuth>} />
+            <Route path="/dashboard" element={<RequireAuth><Dashboard /></RequireAuth>} />
+            <Route path="/profile" element={<RequireAuth><Profile /></RequireAuth>} />
+            <Route path="/profile/setup" element={<RequireAuth><ProfileSetup /></RequireAuth>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
