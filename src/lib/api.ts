@@ -32,7 +32,11 @@ function jsonHeaders(): HeadersInit {
   };
 }
 
-async function request<T>(path: string, init: RequestInit): Promise<T> {
+async function request<T>(
+  path: string,
+  init: RequestInit,
+  opts: { timeoutMs?: number; strictJson?: boolean } = {},
+): Promise<T> {
   if (!BASE_URL) {
     throw new ApiError("Missing VITE_N8N_BASE_URL", 0, "config");
   }
@@ -40,7 +44,7 @@ async function request<T>(path: string, init: RequestInit): Promise<T> {
   try {
     res = await fetch(`${BASE_URL}${path}`, {
       ...init,
-      signal: AbortSignal.timeout(TIMEOUT_MS),
+      signal: AbortSignal.timeout(opts.timeoutMs ?? TIMEOUT_MS),
       headers: { ...jsonHeaders(), ...(init.headers ?? {}) },
     });
   } catch (err) {
