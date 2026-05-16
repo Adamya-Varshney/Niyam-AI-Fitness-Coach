@@ -319,22 +319,17 @@ export default function Onboard() {
             className="rounded-2xl text-base"
             autoFocus
           />
-          <div className="flex flex-col gap-2">
-            <Button size="lg" className="rounded-2xl" onClick={() => setStep("diet")}>
-              Continue
-            </Button>
-            <Button
-              variant="ghost"
-              size="lg"
-              className="rounded-2xl"
-              onClick={() => {
-                setInjuries("");
-                setStep("diet");
-              }}
-            >
-              Skip
-            </Button>
-          </div>
+          <p className="text-xs text-muted-foreground">
+            If you have none, type "none" so we know you've considered it.
+          </p>
+          <Button
+            size="lg"
+            className="rounded-2xl"
+            disabled={!injuries.trim()}
+            onClick={() => setStep("diet")}
+          >
+            Continue
+          </Button>
         </div>
       )}
 
