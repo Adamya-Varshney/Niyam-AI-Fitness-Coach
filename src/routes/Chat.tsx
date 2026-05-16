@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Link } from "react-router-dom";
+
 import { ApiError, newId, postChat, postNudgeAck } from "@/lib/api";
 import { useStatePolling } from "@/lib/polling";
 import { useUser } from "@/lib/user-context";
