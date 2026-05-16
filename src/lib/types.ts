@@ -1,7 +1,7 @@
 // Shared types mirroring the backend contracts.
 
 export type Goal = "build_strength" | "get_lean" | "feel_better" | "move_more";
-export type CurrentActivity = "rarely" | "weekend_only" | "few_times_week" | "most_days";
+export type CurrentActivity = "rarely" | "weekend_only" | "a_few_times" | "few_times_week" | "most_days";
 
 export interface Exercise {
   name: string;
