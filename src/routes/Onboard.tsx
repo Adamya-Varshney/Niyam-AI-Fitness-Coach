@@ -181,6 +181,7 @@ export default function Onboard() {
             equipment: [equipment],
             injuries: finalInjuries.trim(),
             dietary_preference: finalDiet,
+            onboarded_at: new Date().toISOString(),
           })
           .eq("id", userId);
       } catch {
