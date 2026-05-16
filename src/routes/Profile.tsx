@@ -74,7 +74,15 @@ export default function Profile() {
     (prefs.injuries?.trim() ||
       (prefs.equipment && prefs.equipment.length > 0) ||
       (prefs.workout_styles && prefs.workout_styles.length > 0) ||
+      prefs.experience_level ||
       prefs.beliefs_diet?.trim());
+
+  const EXPERIENCE_LABEL: Record<string, string> = {
+    beginner: "Beginner",
+    intermediate: "Intermediate",
+    advanced: "Advanced",
+    elite: "Elite",
+  };
 
   return (
     <main className="min-h-screen bg-background">
@@ -156,6 +164,16 @@ export default function Profile() {
                           </span>
                         ))}
                       </span>
+                    ) : (
+                      <span className="text-muted-foreground">—</span>
+                    )
+                  }
+                />
+                <Row
+                  label="Experience"
+                  value={
+                    prefs?.experience_level ? (
+                      EXPERIENCE_LABEL[prefs.experience_level]
                     ) : (
                       <span className="text-muted-foreground">—</span>
                     )
