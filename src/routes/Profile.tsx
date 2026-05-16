@@ -75,13 +75,19 @@ export default function Profile() {
       (prefs.equipment && prefs.equipment.length > 0) ||
       (prefs.workout_styles && prefs.workout_styles.length > 0) ||
       prefs.experience_level ||
-      prefs.beliefs_diet?.trim());
+      prefs.dietary_preference);
 
   const EXPERIENCE_LABEL: Record<string, string> = {
     beginner: "Beginner",
     intermediate: "Intermediate",
     advanced: "Advanced",
     elite: "Elite",
+  };
+
+  const DIET_LABEL: Record<string, string> = {
+    vegetarian: "Vegetarian",
+    non_vegetarian: "Non-vegetarian",
+    vegan: "Vegan",
   };
 
   return (
