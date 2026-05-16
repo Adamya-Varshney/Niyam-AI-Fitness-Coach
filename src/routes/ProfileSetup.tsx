@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ApiError, postProfile } from "@/lib/api";
 import { useUser } from "@/lib/user-context";
-import type { Equipment, WorkoutStyle } from "@/lib/types";
+import type { Equipment, ExperienceLevel, WorkoutStyle } from "@/lib/types";
 
 const EQUIPMENT_OPTIONS: { value: Equipment; label: string }[] = [
   { value: "none", label: "None / bodyweight" },
@@ -24,10 +24,20 @@ const STYLE_OPTIONS: { value: WorkoutStyle; label: string }[] = [
   { value: "sports", label: "Sports" },
 ];
 
+const EXPERIENCE_OPTIONS: { value: ExperienceLevel; label: string; description: string }[] = [
+  { value: "beginner", label: "Beginner", description: "New to it — under 6 months of consistent practice" },
+  { value: "intermediate", label: "Intermediate", description: "6 months to 2 years, comfortable with the basics" },
+  { value: "advanced", label: "Advanced", description: "2+ years, training with structure and intent" },
+  { value: "elite", label: "Elite", description: "Competitive or coaching-level mastery" },
+];
+
 const profileSchema = z.object({
   injuries: z.string().trim().max(500, "Keep it under 500 characters."),
   equipment: z.array(z.string()).max(EQUIPMENT_OPTIONS.length),
   workout_styles: z.array(z.string()).max(STYLE_OPTIONS.length),
+  experience_level: z
+    .enum(["beginner", "intermediate", "advanced", "elite"])
+    .optional(),
   beliefs_diet: z.string().trim().max(500, "Keep it under 500 characters."),
 });
 
