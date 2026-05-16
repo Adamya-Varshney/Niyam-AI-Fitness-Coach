@@ -13,6 +13,7 @@ import Auth from "./routes/Auth.tsx";
 import ResetPassword from "./routes/ResetPassword.tsx";
 import { UserProvider, useUser } from "./lib/user-context";
 import { AppNav } from "./components/AppNav";
+import { SectionPager } from "./components/SectionPager";
 import { RequireAuth } from "./components/RequireAuth";
 import { useOnboardingStatus } from "./lib/use-onboarding-status";
 
