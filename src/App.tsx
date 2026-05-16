@@ -36,6 +36,7 @@ const App = () => (
       <UserProvider>
         <BrowserRouter>
           <AppNav />
+          <SectionPager />
           <Routes>
             <Route path="/" element={<RootRedirect />} />
             <Route path="/auth" element={<Auth />} />
