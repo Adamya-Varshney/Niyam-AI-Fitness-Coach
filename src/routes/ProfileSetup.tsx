@@ -123,10 +123,11 @@ export default function ProfileSetup() {
       <div className="fade-in mx-auto w-full max-w-md flex flex-col gap-8 px-6 py-12">
         <header className="flex flex-col gap-2">
           <h1 className="font-display text-3xl sm:text-4xl leading-tight">
-            Help us tailor it further
+            A few last details
           </h1>
           <p className="text-sm text-muted-foreground">
-            All fields are optional. Skip anything that doesn't apply.
+            Pick your experience level so the coach calibrates intensity. Everything
+            else is optional — skip what doesn't apply.
           </p>
         </header>
 
