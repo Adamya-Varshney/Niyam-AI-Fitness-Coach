@@ -18,20 +18,12 @@ const GOAL_OPTIONS: { value: Goal; label: string }[] = [
   { value: "move_more", label: "Move more" },
 ];
 
-const ACTIVITY_OPTIONS: { value: CurrentActivity; label: string }[] = [
-  { value: "rarely", label: "Rarely" },
-  { value: "weekend_only", label: "Weekend only" },
-  { value: "few_times_week", label: "A few times a week" },
-  { value: "most_days", label: "Most days" },
-];
-
 export default function Onboard() {
   const navigate = useNavigate();
   const { setUserId } = useUser();
   const [step, setStep] = useState<Step>("name");
   const [name, setName] = useState<string>("");
   const [goal, setGoal] = useState<Goal | null>(null);
-  const [activity, setActivity] = useState<CurrentActivity | null>(null);
   const [time, setTime] = useState<number>(180);
   const [result, setResult] = useState<OnboardResponse | null>(null);
   const [pendingUserId, setPendingUserId] = useState<string | null>(null);
