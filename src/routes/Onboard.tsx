@@ -66,6 +66,21 @@ export default function Onboard() {
 
   const finish = (target: "/chat" | "/profile/setup" = "/chat") => {
     if (pendingUserId) setUserId(pendingUserId);
+    if (result) {
+      try {
+        window.localStorage.setItem(
+          "fc_onboard_seed",
+          JSON.stringify({
+            name: name.trim(),
+            welcome_message: result.welcome_message,
+            baseline_plan: result.baseline_plan,
+            ts: Date.now(),
+          }),
+        );
+      } catch {
+        /* ignore quota */
+      }
+    }
     navigate(target);
   };
 
