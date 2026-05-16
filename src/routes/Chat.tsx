@@ -3,7 +3,25 @@ import { Link } from "react-router-dom";
 import { ApiError, newId, postChat, postNudgeAck } from "@/lib/api";
 import { useStatePolling } from "@/lib/polling";
 import { useUser } from "@/lib/user-context";
-import type { ChatMessage, MessageType, Nudge } from "@/lib/types";
+import type { BaselinePlan, ChatMessage, MessageType, Nudge, SessionPlan } from "@/lib/types";
+
+interface OnboardSeed {
+  name?: string;
+  welcome_message?: string;
+  baseline_plan?: BaselinePlan;
+  ts?: number;
+}
+
+function readOnboardSeed(): OnboardSeed | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = window.localStorage.getItem("fc_onboard_seed");
+    if (!raw) return null;
+    return JSON.parse(raw) as OnboardSeed;
+  } catch {
+    return null;
+  }
+}
 import { TodayCard } from "@/components/TodayCard";
 import { ChatBubble } from "@/components/ChatBubble";
 import { TypingIndicator } from "@/components/TypingIndicator";
