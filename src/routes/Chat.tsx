@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { ApiError, newId, postChat, postNudgeAck } from "@/lib/api";
 import { useStatePolling } from "@/lib/polling";
 import { useUser } from "@/lib/user-context";
-import type { BaselinePlan, ChatMessage, MessageType, Nudge, SessionPlan } from "@/lib/types";
+import type { BaselinePlan, ChatMessage, MessageType, Nudge, RecentTurn, SessionPlan } from "@/lib/types";
 
 interface OnboardSeed {
   name?: string;
@@ -21,6 +21,48 @@ function readOnboardSeed(): OnboardSeed | null {
   } catch {
     return null;
   }
+}
+
+function extractRecentTurns(state: unknown): RecentTurn[] {
+  const s = state as { recent_turns?: RecentTurn[]; profile?: { recent_turns_json?: string } } | null | undefined;
+  if (Array.isArray(s?.recent_turns) && s!.recent_turns!.length > 0) return s!.recent_turns!;
+  const raw = s?.profile?.recent_turns_json;
+  if (!raw) return [];
+  try {
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? (parsed as RecentTurn[]) : [];
+  } catch {
+    return [];
+  }
+}
+
+function deriveTodaySession(state: unknown, fallback?: SessionPlan): SessionPlan | undefined {
+  const s = state as
+    | { today_session?: SessionPlan; current_plan?: { plan_json?: string | BaselinePlan; sessions?: SessionPlan[] } }
+    | null
+    | undefined;
+  if (s?.today_session) return s.today_session;
+  const cp = s?.current_plan;
+  let sessions: SessionPlan[] | undefined;
+  if (cp) {
+    if (Array.isArray((cp as BaselinePlan).sessions)) {
+      sessions = (cp as BaselinePlan).sessions;
+    } else if (typeof cp.plan_json === "string") {
+      try {
+        const parsed = JSON.parse(cp.plan_json) as BaselinePlan;
+        sessions = parsed?.sessions;
+      } catch {
+        /* ignore */
+      }
+    } else if (cp.plan_json && typeof cp.plan_json === "object") {
+      sessions = (cp.plan_json as BaselinePlan).sessions;
+    }
+  }
+  if (sessions && sessions.length > 0) {
+    const today = new Date().toLocaleDateString("en-US", { weekday: "short" });
+    return sessions.find((x) => x.day === today) ?? sessions.find((x) => x.status === "today") ?? sessions[0];
+  }
+  return fallback;
 }
 import { TodayCard } from "@/components/TodayCard";
 import { ChatBubble } from "@/components/ChatBubble";
@@ -42,40 +84,41 @@ export default function Chat() {
   const hydratedRef = useRef(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // Hydrate thread from polling state once.
+  // Seed greeting immediately on mount — don't wait on slow /state webhook.
   useEffect(() => {
     if (hydratedRef.current) return;
-    if (!polling.firstAttemptDone) return;
     hydratedRef.current = true;
+    const seed = readOnboardSeed();
+    const greeting =
+      seed?.welcome_message?.trim() ||
+      (seed?.name
+        ? `Hi ${seed.name} — your week is ready. Tell me how today's going.`
+        : "Hi — I'm here. Tell me how today's going.");
+    setMessages([{ id: "welcome", role: "agent", text: greeting }]);
+  }, []);
 
-    const turns = polling.state?.recent_turns ?? [];
-    if (turns.length > 0) {
-      setMessages(
-        turns.map((t, i) => ({
-          id: `t_${i}_${t.created_at ?? i}`,
-          role: t.role,
-          text: t.text,
-          why: t.why,
-          plan_changes: t.plan_changes,
-          ui_actions: t.ui_actions,
-          kind: t.kind,
-        })),
-      );
-    } else {
-      const seed = readOnboardSeed();
-      const greeting =
-        seed?.welcome_message?.trim() ||
-        (seed?.name
-          ? `Hi ${seed.name} — your week is ready. Tell me how today's going.`
-          : "Hi — I'm here. Tell me how today's going.");
-      setMessages([
-        {
-          id: "welcome",
-          role: "agent",
-          text: greeting,
-        },
-      ]);
+  // When real history arrives from polling, merge it in (replacing seeded greeting).
+  const turnsMergedRef = useRef(false);
+  useEffect(() => {
+    if (turnsMergedRef.current) return;
+    if (!polling.firstAttemptDone) return;
+    const turns = extractRecentTurns(polling.state);
+    if (turns.length === 0) {
+      turnsMergedRef.current = true;
+      return;
     }
+    turnsMergedRef.current = true;
+    setMessages(
+      turns.map((t, i) => ({
+        id: `t_${i}_${t.created_at ?? i}`,
+        role: t.role,
+        text: t.text,
+        why: t.why,
+        plan_changes: t.plan_changes,
+        ui_actions: t.ui_actions,
+        kind: t.kind,
+      })),
+    );
   }, [polling.firstAttemptDone, polling.state]);
 
   // Inject pending nudges as ambient bubbles.
@@ -202,7 +245,7 @@ export default function Chat() {
     const today = sessions.find((s) => s.status === "today");
     return today ?? sessions[0];
   }, []);
-  const todaySession = polling.state?.today_session ?? seedSession;
+  const todaySession = deriveTodaySession(polling.state, seedSession);
   const lastWhy = useMemo(() => {
     for (let i = messages.length - 1; i >= 0; i--) {
       const m = messages[i];
@@ -228,7 +271,7 @@ export default function Chat() {
               message="Live updates coming soon — your onboarding plan is saved and will appear here when the system is fully online."
             />
           ) : (
-            <div className="h-16" />
+            <div className="h-16 rounded-lg bg-muted/40 animate-pulse" aria-hidden="true" />
           )}
         </div>
       </header>
