@@ -15,6 +15,7 @@ import type {
   WorkoutStyle,
 } from "@/lib/types";
 import { useUser } from "@/lib/user-context";
+import { markOnboardedLocally } from "@/lib/use-onboarding-status";
 import { ChevronDown, ChevronUp } from "lucide-react";
 
 type Step =
@@ -190,6 +191,7 @@ export default function Onboard() {
       } catch {
         /* non-blocking */
       }
+      markOnboardedLocally(userId);
       setResult(res);
       setStep("result");
     } catch (err) {
