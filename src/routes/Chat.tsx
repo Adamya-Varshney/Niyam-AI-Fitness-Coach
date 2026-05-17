@@ -271,7 +271,7 @@ export default function Chat() {
               message="Live updates coming soon — your onboarding plan is saved and will appear here when the system is fully online."
             />
           ) : (
-            <div className="h-16" />
+            <div className="h-16 rounded-lg bg-muted/40 animate-pulse" aria-hidden="true" />
           )}
         </div>
       </header>
