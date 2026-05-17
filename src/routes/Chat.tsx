@@ -22,6 +22,48 @@ function readOnboardSeed(): OnboardSeed | null {
     return null;
   }
 }
+
+function extractRecentTurns(state: unknown): RecentTurn[] {
+  const s = state as { recent_turns?: RecentTurn[]; profile?: { recent_turns_json?: string } } | null | undefined;
+  if (Array.isArray(s?.recent_turns) && s!.recent_turns!.length > 0) return s!.recent_turns!;
+  const raw = s?.profile?.recent_turns_json;
+  if (!raw) return [];
+  try {
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? (parsed as RecentTurn[]) : [];
+  } catch {
+    return [];
+  }
+}
+
+function deriveTodaySession(state: unknown, fallback?: SessionPlan): SessionPlan | undefined {
+  const s = state as
+    | { today_session?: SessionPlan; current_plan?: { plan_json?: string | BaselinePlan; sessions?: SessionPlan[] } }
+    | null
+    | undefined;
+  if (s?.today_session) return s.today_session;
+  const cp = s?.current_plan;
+  let sessions: SessionPlan[] | undefined;
+  if (cp) {
+    if (Array.isArray((cp as BaselinePlan).sessions)) {
+      sessions = (cp as BaselinePlan).sessions;
+    } else if (typeof cp.plan_json === "string") {
+      try {
+        const parsed = JSON.parse(cp.plan_json) as BaselinePlan;
+        sessions = parsed?.sessions;
+      } catch {
+        /* ignore */
+      }
+    } else if (cp.plan_json && typeof cp.plan_json === "object") {
+      sessions = (cp.plan_json as BaselinePlan).sessions;
+    }
+  }
+  if (sessions && sessions.length > 0) {
+    const today = new Date().toLocaleDateString("en-US", { weekday: "short" });
+    return sessions.find((x) => x.day === today) ?? sessions.find((x) => x.status === "today") ?? sessions[0];
+  }
+  return fallback;
+}
 import { TodayCard } from "@/components/TodayCard";
 import { ChatBubble } from "@/components/ChatBubble";
 import { TypingIndicator } from "@/components/TypingIndicator";
