@@ -35,7 +35,7 @@ export function AppNav() {
       <div className="mx-auto flex max-w-3xl items-center justify-between gap-3 px-4 h-12">
         <NavLink to="/chat" className="flex items-center gap-1.5 font-display text-sm">
           <Sparkles className="h-4 w-4 text-primary" />
-          <span>FitCoach</span>
+          <span>Niyam</span>
         </NavLink>
         <ul className="flex items-center gap-1">
           {TABS.map(({ to, label, icon: Icon }) => (
