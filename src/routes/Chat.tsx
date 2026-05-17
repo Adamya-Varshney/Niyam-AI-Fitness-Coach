@@ -245,7 +245,7 @@ export default function Chat() {
     const today = sessions.find((s) => s.status === "today");
     return today ?? sessions[0];
   }, []);
-  const todaySession = polling.state?.today_session ?? seedSession;
+  const todaySession = deriveTodaySession(polling.state, seedSession);
   const lastWhy = useMemo(() => {
     for (let i = messages.length - 1; i >= 0; i--) {
       const m = messages[i];
