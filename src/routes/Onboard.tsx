@@ -191,6 +191,7 @@ export default function Onboard() {
       } catch {
         /* non-blocking */
       }
+      markOnboardedLocally(userId);
       setResult(res);
       setStep("result");
     } catch (err) {
