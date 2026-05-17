@@ -42,40 +42,41 @@ export default function Chat() {
   const hydratedRef = useRef(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // Hydrate thread from polling state once.
+  // Seed greeting immediately on mount — don't wait on slow /state webhook.
   useEffect(() => {
     if (hydratedRef.current) return;
-    if (!polling.firstAttemptDone) return;
     hydratedRef.current = true;
+    const seed = readOnboardSeed();
+    const greeting =
+      seed?.welcome_message?.trim() ||
+      (seed?.name
+        ? `Hi ${seed.name} — your week is ready. Tell me how today's going.`
+        : "Hi — I'm here. Tell me how today's going.");
+    setMessages([{ id: "welcome", role: "agent", text: greeting }]);
+  }, []);
 
-    const turns = polling.state?.recent_turns ?? [];
-    if (turns.length > 0) {
-      setMessages(
-        turns.map((t, i) => ({
-          id: `t_${i}_${t.created_at ?? i}`,
-          role: t.role,
-          text: t.text,
-          why: t.why,
-          plan_changes: t.plan_changes,
-          ui_actions: t.ui_actions,
-          kind: t.kind,
-        })),
-      );
-    } else {
-      const seed = readOnboardSeed();
-      const greeting =
-        seed?.welcome_message?.trim() ||
-        (seed?.name
-          ? `Hi ${seed.name} — your week is ready. Tell me how today's going.`
-          : "Hi — I'm here. Tell me how today's going.");
-      setMessages([
-        {
-          id: "welcome",
-          role: "agent",
-          text: greeting,
-        },
-      ]);
+  // When real history arrives from polling, merge it in (replacing seeded greeting).
+  const turnsMergedRef = useRef(false);
+  useEffect(() => {
+    if (turnsMergedRef.current) return;
+    if (!polling.firstAttemptDone) return;
+    const turns = extractRecentTurns(polling.state);
+    if (turns.length === 0) {
+      turnsMergedRef.current = true;
+      return;
     }
+    turnsMergedRef.current = true;
+    setMessages(
+      turns.map((t, i) => ({
+        id: `t_${i}_${t.created_at ?? i}`,
+        role: t.role,
+        text: t.text,
+        why: t.why,
+        plan_changes: t.plan_changes,
+        ui_actions: t.ui_actions,
+        kind: t.kind,
+      })),
+    );
   }, [polling.firstAttemptDone, polling.state]);
 
   // Inject pending nudges as ambient bubbles.
