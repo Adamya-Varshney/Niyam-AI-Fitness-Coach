@@ -93,7 +93,7 @@ export function postChat(payload: ChatRequest): Promise<ChatResponse> {
   return request<ChatResponse>(
     "/webhook/chat",
     { method: "POST", body: JSON.stringify(payload) },
-    { timeoutMs: 8_000, strictJson: true },
+    { timeoutMs: 90_000, strictJson: true },
   );
 }
 
