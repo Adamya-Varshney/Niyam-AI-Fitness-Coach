@@ -1,49 +1,47 @@
-## Goal
+## Diagnosis
 
-1. A returning user (same email + password) who has already completed onboarding once must skip the onboarding flow on every future sign-in.
-2. The `user_id` sent to the n8n workflows must be the same stable unique identifier that's tied to the user's email + password combination, and it must be visible/saved alongside the email in our database.
+The chat *does* eventually load — but for ~7+ seconds after navigating to `/chat`, the page is completely blank (no greeting, no TodayCard). Verified in the live preview:
 
-## What already works
+- `GET https://info15779.n8n-wsk.com/webhook/state?user_id=…` returns **200 in 7.3s**.
+- During that wait, `polling.firstAttemptDone` is `false`, so the hydration `useEffect` in `Chat.tsx` short‑circuits and **never sets the welcome message**.
+- The header slot also renders an empty `<div className="h-16" />` because there is no `today_session` yet.
+- Once the slow response arrives, the welcome bubble appears — but the n8n payload has `today_session: null` and the `recent_turns` live under `profile.recent_turns_json` (string), not at the top level, so the TodayCard still never renders even though `current_plan.plan_json` clearly contains today's session.
 
-- `user_id` passed to n8n is `supabase.auth.user.id` — a UUID created at signup and tied 1:1 to the email/password account for life. This is already the unique identifier you asked for.
-- `profiles.id` = that same UUID. A trigger `on_auth_user_created` already creates a profiles row at signup.
-- `RootRedirect` and `RequireAuth` already check `profiles.onboarded_at` and route completed users straight to `/chat`, sending only pending users to `/onboard`.
+So the user perceives "Chat isn't loading" because the first paint is empty for several seconds and TodayCard is permanently missing.
 
-## What's missing / risky
+## Fix
 
-- `Onboard.tsx` uses `.update()` on the profiles row. If a profile row is ever missing (e.g. legacy users that signed up before the trigger existed, or a race on first login), the update silently no-ops, `onboarded_at` never gets set, and the user is forced through onboarding every time.
-- The profile row has no `email` column, so the user_id ↔ email mapping isn't visible in our own database — it lives only in the `auth.users` table.
+Make Chat render usefully on first paint, independent of the slow webhook.
 
-## Plan
+### 1. `src/routes/Chat.tsx` — don't block initial UI on polling
 
-### 1. Database migration
+- Remove the `if (!polling.firstAttemptDone) return;` guard in the hydration `useEffect`. Set the welcome / seed messages immediately on mount (still only once via `hydratedRef`).
+- When `polling.firstAttemptDone` later flips and `polling.state?.recent_turns` arrives, merge real turns in (replace the seeded greeting if turns exist).
+- Header slot: while polling is in flight and we have no `todaySession`, show a lightweight skeleton (or the seeded TodayCard) instead of the empty `h-16` placeholder. Only fall back to `BackendPlaceholder` after the first attempt completes *and* nothing usable came back.
 
-- Add `email TEXT UNIQUE` column to `public.profiles`.
-- Update the `handle_new_user` trigger function to also write `new.email` into the profile row on signup.
-- Backfill: for every existing `auth.users` row, upsert a `profiles` row with `id` + `email` + display_name (so any legacy account without a profile row gets one, and emails get populated for current users).
+### 2. Derive `today_session` from `current_plan` when `state.today_session` is null
 
-This makes `(profiles.id, profiles.email)` the single source of truth for "this user_id belongs to this email account."
+The n8n response includes `current_plan.plan_json` (a JSON string of `{week_number, sessions:[…]}`). Add a small helper in `Chat.tsx` (or `src/lib/polling.ts`):
 
-### 2. Onboarding write — switch update → upsert
+```ts
+function deriveTodaySession(state): SessionPlan | undefined {
+  if (state?.today_session) return state.today_session;
+  const raw = state?.current_plan?.plan_json;
+  if (!raw) return undefined;
+  try {
+    const plan = typeof raw === "string" ? JSON.parse(raw) : raw;
+    const today = new Date().toLocaleDateString("en-US", { weekday: "short" }); // "Mon", "Tue"…
+    return plan.sessions?.find((s) => s.day === today) ?? plan.sessions?.[0];
+  } catch { return undefined; }
+}
+```
 
-In `src/routes/Onboard.tsx`, change the `supabase.from("profiles").update({...}).eq("id", userId)` call to an `upsert({ id: userId, ...fields, onboarded_at: ... })`. This guarantees `onboarded_at` is persisted even if the row was missing, so the "skip onboarding next time" check becomes 100% reliable.
+Use this for `todaySession` in the TodayCard render.
 
-### 3. No change needed to redirect logic
+### 3. Robust `recent_turns` hydration
 
-`RootRedirect` (in `App.tsx`) and `RequireAuth` already do the right thing once `onboarded_at` is set:
-- Signed-in + onboarded → `/chat`
-- Signed-in + not onboarded → `/onboard`
-- Signed-out → `/auth`
+Also accept `state.profile?.recent_turns_json` (string) as a fallback when top‑level `recent_turns` is missing, so prior chat history surfaces once the API is wired through.
 
-After steps 1 + 2, every account that has finished onboarding once will go straight to `/chat` on every future login, on any device.
+## Out of scope
 
-### 4. No change needed to the n8n payload
-
-`postOnboard({ user_id: userId, ... })` in `Onboard.tsx` and the other `/webhook/*` calls already send the Supabase auth UUID. With the new `email` column on profiles, you (or n8n, via a future read) can always resolve `user_id ↔ email` from our database.
-
-## Files touched
-
-- New SQL migration (profiles.email + trigger update + backfill)
-- `src/routes/Onboard.tsx` — one call site changed from `update` to `upsert`
-
-No UI/visual changes.
+- No changes to n8n, Supabase, auth, or the onboarding gate. The onboarding redirect already works correctly — the slow webhook on Chat is the visible problem.
