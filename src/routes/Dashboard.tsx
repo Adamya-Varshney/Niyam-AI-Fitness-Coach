@@ -46,8 +46,21 @@ export default function Dashboard() {
   }, []);
 
   const sessions: SessionPlan[] = useMemo(() => {
-    const fromState = state?.current_plan?.sessions ?? [];
-    if (fromState.length > 0) return fromState;
+    const cp = state?.current_plan as
+      | (BaselinePlan & { plan_json?: string | BaselinePlan })
+      | undefined;
+    if (cp) {
+      if (Array.isArray(cp.sessions) && cp.sessions.length > 0) return cp.sessions;
+      const raw = cp.plan_json;
+      if (typeof raw === "string") {
+        try {
+          const parsed = JSON.parse(raw) as BaselinePlan;
+          if (parsed?.sessions?.length) return parsed.sessions;
+        } catch { /* ignore */ }
+      } else if (raw && typeof raw === "object" && Array.isArray(raw.sessions)) {
+        return raw.sessions;
+      }
+    }
     return seed?.baseline_plan?.sessions ?? [];
   }, [state, seed]);
 
