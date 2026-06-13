@@ -14,10 +14,31 @@ interface UseStatePollingResult {
   refresh: () => Promise<void>;
 }
 
+const cacheKey = (userId: string) => `fc_state_cache:${userId}`;
+
+function readCache(userId: string | null): StateResponse | null {
+  if (!userId || typeof window === "undefined") return null;
+  try {
+    const raw = window.localStorage.getItem(cacheKey(userId));
+    return raw ? (JSON.parse(raw) as StateResponse) : null;
+  } catch {
+    return null;
+  }
+}
+
+function writeCache(userId: string, value: StateResponse) {
+  try {
+    window.localStorage.setItem(cacheKey(userId), JSON.stringify(value));
+  } catch {
+    /* ignore quota */
+  }
+}
+
 export function useStatePolling(userId: string | null): UseStatePollingResult {
-  const [state, setState] = useState<StateResponse | null>(null);
+  const [state, setState] = useState<StateResponse | null>(() => readCache(userId));
   const [isStale, setIsStale] = useState(false);
-  const [firstAttemptDone, setFirstAttemptDone] = useState(false);
+  // If we hydrated from cache, treat first attempt as done so UI renders immediately.
+  const [firstAttemptDone, setFirstAttemptDone] = useState(() => readCache(userId) !== null);
   const [notBuilt, setNotBuilt] = useState(false);
 
   const failureCount = useRef(0);
@@ -30,6 +51,7 @@ export function useStatePolling(userId: string | null): UseStatePollingResult {
       const next = await getState(userId);
       if (!mountedRef.current) return;
       setState(next);
+      writeCache(userId, next);
       setIsStale(false);
       setNotBuilt(false);
       failureCount.current = 0;
