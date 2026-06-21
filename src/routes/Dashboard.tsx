@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useStatePolling } from "@/lib/polling";
 import { useUser } from "@/lib/user-context";
 import { useCloudUserData, backfillBaselinePlan } from "@/lib/user-data";
