@@ -1,91 +1,51 @@
-## Goal
+## Chat UI polish — messaging-app feel
 
-Make Plan and Chat sections always show the user's data after login, even when the external n8n `/state` webhook is slow, fails, or the user is on a new device with no localStorage cache.
+Two focused changes to the chat transcript. The composer, Today card, and chat layout stay as they are.
 
-## Root cause
+### 1. Render the AI coach's text cleanly
 
-Today the baseline plan and chat history live in two unreliable places:
-- **Baseline plan**: only in `localStorage` (`fc_onboard_seed`) and in n8n's response to `/webhook/state`. New device or cleared storage → nothing shows until n8n responds; if n8n fails, nothing ever shows.
-- **Chat history**: only in n8n's `/webhook/state` response (`recent_turns`). Same failure mode.
+Right now agent replies sometimes arrive with literal `**bold**` markdown and render the asterisks as characters. Add a tiny inline markdown renderer used by `ChatBubble` for agent messages:
 
-Lovable Cloud (Supabase) already stores the profile but not the plan or messages.
+- `**text**` → `<strong>text</strong>`
+- `*text*` / `_text_` → `<em>em</em>`
+- backtick `` `code` `` → inline `<code>` chip
+- Bare URLs → clickable links
+- Preserve line breaks (current `whitespace-pre-wrap` stays)
+- Strip leading/trailing stray `**` that wrap the whole message (the specific case the user flagged)
 
-## Fix — persist both to Lovable Cloud and use it as a guaranteed fallback
+Keep it dependency-free (small regex-based renderer, ~40 lines) so we don't pull in `react-markdown`. User messages stay plain text — no markdown parsing on the user side.
 
-### 1. Database (new migration)
+### 2. WhatsApp / Instagram-style bubbles
 
-Add to `public.profiles`:
-- `baseline_plan jsonb` — written at end of onboarding, read by Dashboard/Chat as a fallback when `state.current_plan` is absent.
+Restyle just `ChatBubble.tsx` and the supporting tokens — no layout changes to `Chat.tsx`.
 
-New table `public.chat_messages`:
-```
-id uuid pk default gen_random_uuid()
-user_id uuid not null references auth.users(id) on delete cascade
-role text not null check (role in ('user','agent'))
-text text not null
-why text
-plan_changes jsonb
-ui_actions jsonb
-kind text
-created_at timestamptz default now()
-```
-Indexes: `(user_id, created_at)`. Enable RLS + GRANTs:
-- `authenticated`: SELECT/INSERT own rows (`user_id = auth.uid()`).
-- `service_role`: ALL.
+Visual moves:
+- **User bubble**: right-aligned, solid accent fill (current `bg-user-bubble`), tighter corner on the bottom-right (`rounded-2xl rounded-br-md`), subtle drop shadow, max-width ~75%.
+- **Agent bubble**: left-aligned, soft neutral surface, tighter corner on the bottom-left (`rounded-2xl rounded-bl-md`), no border, slightly larger line-height for readability.
+- **Tails**: small CSS pseudo-element tail on the inside corner of each bubble (classic chat-app cue), color-matched to the bubble.
+- **Grouping**: consecutive same-role messages collapse vertical gap (8px within group, 16px between groups) and only the last in a group gets the tail — feels like iMessage/WhatsApp threading.
+- **Timestamp + read state**: tiny 11px muted timestamp under the last message of each group, right-aligned for user, left-aligned for agent. Pulled from `created_at` when available, otherwise omitted.
+- **Avatar**: small circular coach avatar (initial "N" on a warm gradient) next to the first agent message in a group; user side stays avatar-less like WhatsApp.
+- **Action row** (`Play`, `why?`, `Try again`): shrinks to icon-only on hover, fades in instead of always-visible — keeps the transcript clean.
+- **Fade-in stays**, plus a 1px translate-up on enter for a softer settle.
 
-### 2. Onboarding write
+### Technical details
 
-In `src/routes/Onboard.tsx` `submit()`, include `baseline_plan: res.baseline_plan` in the existing `profiles.upsert(...)` so the plan is saved alongside other onboarding answers.
+Files touched:
+- `src/components/ChatBubble.tsx` — new inline markdown renderer, new bubble classes, avatar, timestamp, grouping-aware props (`isFirstInGroup`, `isLastInGroup`).
+- `src/routes/Chat.tsx` — compute `isFirstInGroup` / `isLastInGroup` by walking `messages` and pass to each `ChatBubble`. No structural changes.
+- `src/index.css` — extend `bubble-radius` into `.bubble-user` / `.bubble-agent` with pseudo-element tails; add `.bubble-group-gap` spacing helper.
+- `src/lib/types.ts` — add optional `created_at?: string` to `ChatMessage` so the timestamp can render when available (already present on `RecentTurn`).
+- `src/assets/coach-avatar.png` — generate a small warm-gradient avatar mark for the agent side.
 
-### 3. Chat persistence
+Non-goals:
+- No changes to composer, Today card, chat header, scroll behavior, or message persistence.
+- No new dependencies (no `react-markdown`, no AI Elements migration for this pass).
+- No threading/multi-conversation UI — single chat surface stays.
 
-In `src/routes/Chat.tsx` `send()`:
-- After appending the user message, insert it into `chat_messages`.
-- After receiving the agent reply, insert it (with `why`, `plan_changes`, `ui_actions`).
-- Fire-and-forget; failures don't block UI.
+### Verification
 
-### 4. Reliable read layer
-
-New hook `useUserData(userId)` in `src/lib/user-data.ts`:
-- Fetches `profiles` (including `baseline_plan`) and the last ~50 `chat_messages` from Supabase in parallel on mount.
-- Returns `{ baselinePlan, chatHistory, profile, loading }`.
-
-### 5. Dashboard
-
-In `src/routes/Dashboard.tsx`, derive `sessions` with priority:
-1. `state.current_plan.sessions` (live from n8n)
-2. `profile.baseline_plan.sessions` (Cloud) — **new guaranteed fallback**
-3. `seed.baseline_plan.sessions` (localStorage)
-
-This guarantees the weekly plan renders for any logged-in user who has onboarded.
-
-### 6. Chat
-
-In `src/routes/Chat.tsx`:
-- Replace the localStorage-only greeting seed with: greeting from cloud chat history if present, else `state.recent_turns`, else welcome seed.
-- Merge order on mount: Cloud `chat_messages` render immediately; when `state.recent_turns` arrives later and is longer/newer, reconcile by `created_at`.
-- `today_session` / `TodayCard` falls back to `profile.baseline_plan` like Dashboard.
-
-### 7. Profile fallback
-
-`src/routes/Profile.tsx` already reads from `profiles`; verify it picks up the new `baseline_plan` field — no UI change required there.
-
-## Non-goals
-
-- Not changing the n8n webhook contract or API surface in `src/lib/api.ts`.
-- Not removing the localStorage cache in `src/lib/polling.ts` — it stays as an additional speed boost.
-- Not migrating existing users' plans backwards (only new onboardings populate `baseline_plan` in DB; existing users' plans will be saved the next time n8n returns one if we add a small effect, or stay on the localStorage path).
-
-## Files touched
-
-- `supabase/migrations/<new>.sql` — add column, create `chat_messages`, RLS, GRANTs.
-- `src/routes/Onboard.tsx` — save `baseline_plan` to profiles.
-- `src/routes/Chat.tsx` — persist & rehydrate messages from Cloud; use Cloud plan as fallback.
-- `src/routes/Dashboard.tsx` — Cloud baseline plan fallback.
-- `src/lib/user-data.ts` — new hook.
-
-## Verification
-
-- New account → onboard → reload Plan: weekly plan visible even with n8n offline.
-- Send chat messages → reload → previous chat re-renders from Cloud instantly.
-- Log in from a different browser/device → both Plan and Chat populate from Cloud.
+- Send a message that includes `**bold**`, `*italic*`, `` `code` ``, and a URL → renders styled, no stray asterisks.
+- Send three messages in a row → they group with a single tail + timestamp at the bottom.
+- Reload chat with existing history → bubbles look like a DM thread, not flat blocks.
+- Light/dark both pass contrast on user and agent bubbles.
