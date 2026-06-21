@@ -76,6 +76,7 @@ const COMPOSER_DISABLE_MS = 3000;
 export default function Chat() {
   const { userId } = useUser();
   const polling = useStatePolling(userId);
+  const cloud = useCloudUserData(userId);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [pending, setPending] = useState(false);
   const [welcomeBackVisible, setWelcomeBackVisible] = useState(true);
@@ -83,6 +84,7 @@ export default function Chat() {
   const composerRef = useRef<ComposerHandle>(null);
   const seenNudges = useRef<Set<string>>(new Set());
   const hydratedRef = useRef(false);
+  const cloudMergedRef = useRef(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   // Seed greeting immediately on mount — don't wait on slow /state webhook.
@@ -98,7 +100,17 @@ export default function Chat() {
     setMessages([{ id: "welcome", role: "agent", text: greeting }]);
   }, []);
 
-  // When real history arrives from polling, merge it in (replacing seeded greeting).
+  // When cloud history loads, replace the seeded greeting with persisted messages.
+  useEffect(() => {
+    if (cloudMergedRef.current) return;
+    if (cloud.loading) return;
+    cloudMergedRef.current = true;
+    if (cloud.chatHistory.length > 0) {
+      setMessages(cloud.chatHistory);
+    }
+  }, [cloud.loading, cloud.chatHistory]);
+
+  // When real history arrives from polling, merge it in if richer than what we have.
   const turnsMergedRef = useRef(false);
   useEffect(() => {
     if (turnsMergedRef.current) return;
@@ -109,8 +121,10 @@ export default function Chat() {
       return;
     }
     turnsMergedRef.current = true;
-    setMessages(
-      turns.map((t, i) => ({
+    // Only overwrite if /state has more turns than our cloud history (server is source of truth).
+    setMessages((prev) => {
+      if (turns.length <= prev.length) return prev;
+      return turns.map((t, i) => ({
         id: `t_${i}_${t.created_at ?? i}`,
         role: t.role,
         text: t.text,
@@ -118,8 +132,8 @@ export default function Chat() {
         plan_changes: t.plan_changes,
         ui_actions: t.ui_actions,
         kind: t.kind,
-      })),
-    );
+      }));
+    });
   }, [polling.firstAttemptDone, polling.state]);
 
   // Inject pending nudges as ambient bubbles.
