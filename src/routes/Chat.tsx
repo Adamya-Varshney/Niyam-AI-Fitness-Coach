@@ -3,6 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { ApiError, newId, postChat, postNudgeAck } from "@/lib/api";
 import { useStatePolling } from "@/lib/polling";
 import { useUser } from "@/lib/user-context";
+import { useCloudUserData, persistChatMessage } from "@/lib/user-data";
 import type { BaselinePlan, ChatMessage, MessageType, Nudge, RecentTurn, SessionPlan } from "@/lib/types";
 
 interface OnboardSeed {
