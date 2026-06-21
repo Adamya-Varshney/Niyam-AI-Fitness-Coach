@@ -184,6 +184,7 @@ export default function Chat() {
       ...prev,
       { id: userMsgId, role: "user", text },
     ]);
+    void persistChatMessage(userId, { role: "user", text });
     setPending(true);
 
     try {
@@ -205,6 +206,13 @@ export default function Chat() {
           ui_actions: res.ui_actions,
         },
       ]);
+      void persistChatMessage(userId, {
+        role: "agent",
+        text: res.reply,
+        why: res.why,
+        plan_changes: res.plan_changes,
+        ui_actions: res.ui_actions,
+      });
       void polling.refresh();
     } catch (err) {
       const apiErr = err instanceof ApiError ? err : null;
