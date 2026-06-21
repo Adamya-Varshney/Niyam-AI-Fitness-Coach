@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
 import { useStatePolling } from "@/lib/polling";
 import { useUser } from "@/lib/user-context";
+import { useCloudUserData } from "@/lib/user-data";
 import { TodayCard } from "@/components/TodayCard";
 import { BackendPlaceholder } from "@/components/BackendPlaceholder";
 import { Button } from "@/components/ui/button";
@@ -34,6 +35,7 @@ function dayIndex(day?: string): number | null {
 export default function Dashboard() {
   const { userId } = useUser();
   const { state, firstAttemptDone, neverLoaded } = useStatePolling(userId);
+  const { baselinePlan: cloudPlan, loading: cloudLoading } = useCloudUserData(userId);
   const [seed, setSeed] = useState<OnboardSeed | null>(null);
 
   useEffect(() => {
@@ -61,8 +63,9 @@ export default function Dashboard() {
         return raw.sessions;
       }
     }
+    if (cloudPlan?.sessions?.length) return cloudPlan.sessions;
     return seed?.baseline_plan?.sessions ?? [];
-  }, [state, seed]);
+  }, [state, cloudPlan, seed]);
 
   const todaySession: SessionPlan | undefined = useMemo(() => {
     if (state?.today_session) return state.today_session;
