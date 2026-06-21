@@ -84,7 +84,7 @@ export default function Chat() {
   const composerRef = useRef<ComposerHandle>(null);
   const seenNudges = useRef<Set<string>>(new Set());
   const hydratedRef = useRef(false);
-  const cloudMergedRef = useRef(false);
+  
   const scrollRef = useRef<HTMLDivElement>(null);
 
   // Seed greeting immediately on mount — don't wait on slow /state webhook.
