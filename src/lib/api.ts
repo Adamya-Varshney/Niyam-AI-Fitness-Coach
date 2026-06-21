@@ -73,13 +73,30 @@ async function request<T>(
     return {} as T;
   }
   try {
-    return JSON.parse(text) as T;
+    return normalizeKeys(JSON.parse(text)) as T;
   } catch {
     if (opts.strictJson) {
       throw new ApiError("Malformed JSON", res.status, "http", text);
     }
     return {} as T;
   }
+}
+
+/**
+ * n8n sometimes returns JSON with trailing whitespace in column-name keys
+ * (e.g. `"plan_json  "`). Recursively trim keys so downstream code can read
+ * normal property names.
+ */
+function normalizeKeys(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(normalizeKeys);
+  if (value && typeof value === "object") {
+    const out: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
+      out[k.trim()] = normalizeKeys(v);
+    }
+    return out;
+  }
+  return value;
 }
 
 export function postOnboard(payload: OnboardRequest): Promise<OnboardResponse> {
