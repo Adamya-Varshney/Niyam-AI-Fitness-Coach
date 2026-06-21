@@ -14,9 +14,46 @@ export type Database = {
   }
   public: {
     Tables: {
+      chat_messages: {
+        Row: {
+          created_at: string
+          id: string
+          kind: string | null
+          plan_changes: Json | null
+          role: string
+          text: string
+          ui_actions: Json | null
+          user_id: string
+          why: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          kind?: string | null
+          plan_changes?: Json | null
+          role: string
+          text: string
+          ui_actions?: Json | null
+          user_id: string
+          why?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          kind?: string | null
+          plan_changes?: Json | null
+          role?: string
+          text?: string
+          ui_actions?: Json | null
+          user_id?: string
+          why?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
+          baseline_plan: Json | null
           created_at: string
           current_activity: string | null
           dietary_preference: string | null
@@ -34,6 +71,7 @@ export type Database = {
         }
         Insert: {
           avatar_url?: string | null
+          baseline_plan?: Json | null
           created_at?: string
           current_activity?: string | null
           dietary_preference?: string | null
@@ -51,6 +89,7 @@ export type Database = {
         }
         Update: {
           avatar_url?: string | null
+          baseline_plan?: Json | null
           created_at?: string
           current_activity?: string | null
           dietary_preference?: string | null

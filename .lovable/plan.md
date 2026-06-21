@@ -1,47 +1,91 @@
-## Diagnosis
+## Goal
 
-The chat *does* eventually load — but for ~7+ seconds after navigating to `/chat`, the page is completely blank (no greeting, no TodayCard). Verified in the live preview:
+Make Plan and Chat sections always show the user's data after login, even when the external n8n `/state` webhook is slow, fails, or the user is on a new device with no localStorage cache.
 
-- `GET https://info15779.n8n-wsk.com/webhook/state?user_id=…` returns **200 in 7.3s**.
-- During that wait, `polling.firstAttemptDone` is `false`, so the hydration `useEffect` in `Chat.tsx` short‑circuits and **never sets the welcome message**.
-- The header slot also renders an empty `<div className="h-16" />` because there is no `today_session` yet.
-- Once the slow response arrives, the welcome bubble appears — but the n8n payload has `today_session: null` and the `recent_turns` live under `profile.recent_turns_json` (string), not at the top level, so the TodayCard still never renders even though `current_plan.plan_json` clearly contains today's session.
+## Root cause
 
-So the user perceives "Chat isn't loading" because the first paint is empty for several seconds and TodayCard is permanently missing.
+Today the baseline plan and chat history live in two unreliable places:
+- **Baseline plan**: only in `localStorage` (`fc_onboard_seed`) and in n8n's response to `/webhook/state`. New device or cleared storage → nothing shows until n8n responds; if n8n fails, nothing ever shows.
+- **Chat history**: only in n8n's `/webhook/state` response (`recent_turns`). Same failure mode.
 
-## Fix
+Lovable Cloud (Supabase) already stores the profile but not the plan or messages.
 
-Make Chat render usefully on first paint, independent of the slow webhook.
+## Fix — persist both to Lovable Cloud and use it as a guaranteed fallback
 
-### 1. `src/routes/Chat.tsx` — don't block initial UI on polling
+### 1. Database (new migration)
 
-- Remove the `if (!polling.firstAttemptDone) return;` guard in the hydration `useEffect`. Set the welcome / seed messages immediately on mount (still only once via `hydratedRef`).
-- When `polling.firstAttemptDone` later flips and `polling.state?.recent_turns` arrives, merge real turns in (replace the seeded greeting if turns exist).
-- Header slot: while polling is in flight and we have no `todaySession`, show a lightweight skeleton (or the seeded TodayCard) instead of the empty `h-16` placeholder. Only fall back to `BackendPlaceholder` after the first attempt completes *and* nothing usable came back.
+Add to `public.profiles`:
+- `baseline_plan jsonb` — written at end of onboarding, read by Dashboard/Chat as a fallback when `state.current_plan` is absent.
 
-### 2. Derive `today_session` from `current_plan` when `state.today_session` is null
-
-The n8n response includes `current_plan.plan_json` (a JSON string of `{week_number, sessions:[…]}`). Add a small helper in `Chat.tsx` (or `src/lib/polling.ts`):
-
-```ts
-function deriveTodaySession(state): SessionPlan | undefined {
-  if (state?.today_session) return state.today_session;
-  const raw = state?.current_plan?.plan_json;
-  if (!raw) return undefined;
-  try {
-    const plan = typeof raw === "string" ? JSON.parse(raw) : raw;
-    const today = new Date().toLocaleDateString("en-US", { weekday: "short" }); // "Mon", "Tue"…
-    return plan.sessions?.find((s) => s.day === today) ?? plan.sessions?.[0];
-  } catch { return undefined; }
-}
+New table `public.chat_messages`:
 ```
+id uuid pk default gen_random_uuid()
+user_id uuid not null references auth.users(id) on delete cascade
+role text not null check (role in ('user','agent'))
+text text not null
+why text
+plan_changes jsonb
+ui_actions jsonb
+kind text
+created_at timestamptz default now()
+```
+Indexes: `(user_id, created_at)`. Enable RLS + GRANTs:
+- `authenticated`: SELECT/INSERT own rows (`user_id = auth.uid()`).
+- `service_role`: ALL.
 
-Use this for `todaySession` in the TodayCard render.
+### 2. Onboarding write
 
-### 3. Robust `recent_turns` hydration
+In `src/routes/Onboard.tsx` `submit()`, include `baseline_plan: res.baseline_plan` in the existing `profiles.upsert(...)` so the plan is saved alongside other onboarding answers.
 
-Also accept `state.profile?.recent_turns_json` (string) as a fallback when top‑level `recent_turns` is missing, so prior chat history surfaces once the API is wired through.
+### 3. Chat persistence
 
-## Out of scope
+In `src/routes/Chat.tsx` `send()`:
+- After appending the user message, insert it into `chat_messages`.
+- After receiving the agent reply, insert it (with `why`, `plan_changes`, `ui_actions`).
+- Fire-and-forget; failures don't block UI.
 
-- No changes to n8n, Supabase, auth, or the onboarding gate. The onboarding redirect already works correctly — the slow webhook on Chat is the visible problem.
+### 4. Reliable read layer
+
+New hook `useUserData(userId)` in `src/lib/user-data.ts`:
+- Fetches `profiles` (including `baseline_plan`) and the last ~50 `chat_messages` from Supabase in parallel on mount.
+- Returns `{ baselinePlan, chatHistory, profile, loading }`.
+
+### 5. Dashboard
+
+In `src/routes/Dashboard.tsx`, derive `sessions` with priority:
+1. `state.current_plan.sessions` (live from n8n)
+2. `profile.baseline_plan.sessions` (Cloud) — **new guaranteed fallback**
+3. `seed.baseline_plan.sessions` (localStorage)
+
+This guarantees the weekly plan renders for any logged-in user who has onboarded.
+
+### 6. Chat
+
+In `src/routes/Chat.tsx`:
+- Replace the localStorage-only greeting seed with: greeting from cloud chat history if present, else `state.recent_turns`, else welcome seed.
+- Merge order on mount: Cloud `chat_messages` render immediately; when `state.recent_turns` arrives later and is longer/newer, reconcile by `created_at`.
+- `today_session` / `TodayCard` falls back to `profile.baseline_plan` like Dashboard.
+
+### 7. Profile fallback
+
+`src/routes/Profile.tsx` already reads from `profiles`; verify it picks up the new `baseline_plan` field — no UI change required there.
+
+## Non-goals
+
+- Not changing the n8n webhook contract or API surface in `src/lib/api.ts`.
+- Not removing the localStorage cache in `src/lib/polling.ts` — it stays as an additional speed boost.
+- Not migrating existing users' plans backwards (only new onboardings populate `baseline_plan` in DB; existing users' plans will be saved the next time n8n returns one if we add a small effect, or stay on the localStorage path).
+
+## Files touched
+
+- `supabase/migrations/<new>.sql` — add column, create `chat_messages`, RLS, GRANTs.
+- `src/routes/Onboard.tsx` — save `baseline_plan` to profiles.
+- `src/routes/Chat.tsx` — persist & rehydrate messages from Cloud; use Cloud plan as fallback.
+- `src/routes/Dashboard.tsx` — Cloud baseline plan fallback.
+- `src/lib/user-data.ts` — new hook.
+
+## Verification
+
+- New account → onboard → reload Plan: weekly plan visible even with n8n offline.
+- Send chat messages → reload → previous chat re-renders from Cloud instantly.
+- Log in from a different browser/device → both Plan and Chat populate from Cloud.
