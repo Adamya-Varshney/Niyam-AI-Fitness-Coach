@@ -43,7 +43,7 @@ export function useCloudUserData(userId: string | null): CloudUserData {
     ])
       .then(([profileRes, msgsRes]) => {
         if (cancelled) return;
-        const bp = (profileRes.data as { baseline_plan?: BaselinePlan } | null)?.baseline_plan ?? null;
+        const bp = (profileRes.data as unknown as { baseline_plan?: BaselinePlan } | null)?.baseline_plan ?? null;
         setBaselinePlan(bp ?? null);
         const rows = (msgsRes.data ?? []) as ChatRow[];
         setChatHistory(
