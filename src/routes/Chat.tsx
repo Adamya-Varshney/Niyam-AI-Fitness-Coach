@@ -263,11 +263,15 @@ export default function Chat() {
 
   const seedSession = useMemo<SessionPlan | undefined>(() => {
     const seed = readOnboardSeed();
-    const sessions = seed?.baseline_plan?.sessions ?? [];
+    const sessions =
+      cloud.baselinePlan?.sessions ?? seed?.baseline_plan?.sessions ?? [];
     if (sessions.length === 0) return undefined;
-    const today = sessions.find((s) => s.status === "today");
+    const todayName = new Date().toLocaleDateString("en-US", { weekday: "short" });
+    const today =
+      sessions.find((s) => s.day === todayName) ??
+      sessions.find((s) => s.status === "today");
     return today ?? sessions[0];
-  }, []);
+  }, [cloud.baselinePlan]);
   const todaySession = deriveTodaySession(polling.state, seedSession);
   const lastWhy = useMemo(() => {
     for (let i = messages.length - 1; i >= 0; i--) {
