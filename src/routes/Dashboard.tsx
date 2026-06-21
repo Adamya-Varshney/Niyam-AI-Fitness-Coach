@@ -1,8 +1,8 @@
 import { Link } from "react-router-dom";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useStatePolling } from "@/lib/polling";
 import { useUser } from "@/lib/user-context";
-import { useCloudUserData } from "@/lib/user-data";
+import { useCloudUserData, backfillBaselinePlan } from "@/lib/user-data";
 import { TodayCard } from "@/components/TodayCard";
 import { BackendPlaceholder } from "@/components/BackendPlaceholder";
 import { Button } from "@/components/ui/button";
@@ -66,6 +66,25 @@ export default function Dashboard() {
     if (cloudPlan?.sessions?.length) return cloudPlan.sessions;
     return seed?.baseline_plan?.sessions ?? [];
   }, [state, cloudPlan, seed]);
+
+  // Backfill cloud baseline_plan for users who onboarded before it was persisted.
+  const backfilledRef = useRef(false);
+  useEffect(() => {
+    if (backfilledRef.current) return;
+    if (!userId || cloudLoading) return;
+    if (cloudPlan?.sessions?.length) {
+      backfilledRef.current = true;
+      return;
+    }
+    if (sessions.length > 0) {
+      backfilledRef.current = true;
+      const weekNumber =
+        (state?.current_plan as BaselinePlan | undefined)?.week_number ??
+        seed?.baseline_plan?.week_number ??
+        1;
+      void backfillBaselinePlan(userId, { week_number: weekNumber, sessions });
+    }
+  }, [userId, cloudLoading, cloudPlan, sessions, state, seed]);
 
   const todaySession: SessionPlan | undefined = useMemo(() => {
     if (state?.today_session) return state.today_session;

@@ -95,3 +95,17 @@ export async function persistChatMessage(
     /* non-blocking */
   }
 }
+
+export async function backfillBaselinePlan(
+  userId: string,
+  plan: BaselinePlan,
+): Promise<void> {
+  try {
+    await supabase
+      .from("profiles")
+      .update({ baseline_plan: plan as unknown as never })
+      .eq("id", userId);
+  } catch {
+    /* non-blocking */
+  }
+}
