@@ -35,6 +35,7 @@ function dayIndex(day?: string): number | null {
 export default function Dashboard() {
   const { userId } = useUser();
   const { state, firstAttemptDone, neverLoaded } = useStatePolling(userId);
+  const { baselinePlan: cloudPlan, loading: cloudLoading } = useCloudUserData(userId);
   const [seed, setSeed] = useState<OnboardSeed | null>(null);
 
   useEffect(() => {
@@ -62,8 +63,9 @@ export default function Dashboard() {
         return raw.sessions;
       }
     }
+    if (cloudPlan?.sessions?.length) return cloudPlan.sessions;
     return seed?.baseline_plan?.sessions ?? [];
-  }, [state, seed]);
+  }, [state, cloudPlan, seed]);
 
   const todaySession: SessionPlan | undefined = useMemo(() => {
     if (state?.today_session) return state.today_session;
