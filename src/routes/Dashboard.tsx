@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
 import { useStatePolling } from "@/lib/polling";
 import { useUser } from "@/lib/user-context";
-import { useCloudUserData } from "@/lib/user-data";
+import { useCloudUserData, backfillBaselinePlan } from "@/lib/user-data";
 import { TodayCard } from "@/components/TodayCard";
 import { BackendPlaceholder } from "@/components/BackendPlaceholder";
 import { Button } from "@/components/ui/button";
