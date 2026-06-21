@@ -175,9 +175,9 @@ export default function Chat() {
     const userMsgId = newId();
     setMessages((prev) => [
       ...prev,
-      { id: userMsgId, role: "user", text },
+      { id: userMsgId, role: "user", text, created_at: new Date().toISOString() },
     ]);
-    
+
     setPending(true);
 
     try {
@@ -197,8 +197,10 @@ export default function Chat() {
           why: res.why,
           plan_changes: res.plan_changes,
           ui_actions: res.ui_actions,
+          created_at: new Date().toISOString(),
         },
       ]);
+
 
 
       void polling.refresh();
