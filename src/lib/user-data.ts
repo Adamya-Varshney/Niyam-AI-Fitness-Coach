@@ -26,7 +26,7 @@ export function useCloudUserData(userId: string | null): CloudUserData {
       .maybeSingle()
       .then((res) => {
         if (cancelled) return;
-        const bp = (res.data as { baseline_plan?: BaselinePlan } | null)?.baseline_plan ?? null;
+        const bp = (res.data as unknown as { baseline_plan?: BaselinePlan } | null)?.baseline_plan ?? null;
         setBaselinePlan(bp ?? null);
       })
       .then(() => {
