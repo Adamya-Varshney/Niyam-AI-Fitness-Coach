@@ -148,4 +148,5 @@ export interface ChatMessage {
   pending?: boolean;
   failed?: boolean;
   retryPayload?: { message: string; message_type: MessageType };
+  created_at?: string;
 }

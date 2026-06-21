@@ -125,6 +125,7 @@ export default function Chat() {
         plan_changes: t.plan_changes,
         ui_actions: t.ui_actions,
         kind: t.kind,
+        created_at: t.created_at,
       }));
     });
   }, [polling.firstAttemptDone, polling.state]);
@@ -175,9 +176,9 @@ export default function Chat() {
     const userMsgId = newId();
     setMessages((prev) => [
       ...prev,
-      { id: userMsgId, role: "user", text },
+      { id: userMsgId, role: "user", text, created_at: new Date().toISOString() },
     ]);
-    
+
     setPending(true);
 
     try {
@@ -197,8 +198,10 @@ export default function Chat() {
           why: res.why,
           plan_changes: res.plan_changes,
           ui_actions: res.ui_actions,
+          created_at: new Date().toISOString(),
         },
       ]);
+
 
 
       void polling.refresh();
@@ -292,10 +295,23 @@ export default function Chat() {
       </header>
 
       <div ref={scrollRef} className="flex-1 overflow-y-auto px-3 py-4">
-        <div className="mx-auto max-w-2xl flex flex-col gap-4">
-          {messages.map((m) => (
-            <ChatBubble key={m.id} message={m} onChip={onChip} onRetry={onRetry} />
-          ))}
+        <div className="mx-auto max-w-2xl flex flex-col gap-3">
+          {messages.map((m, i) => {
+            const prev = messages[i - 1];
+            const next = messages[i + 1];
+            const isFirstInGroup = !prev || prev.role !== m.role || prev.kind !== m.kind;
+            const isLastInGroup = !next || next.role !== m.role || next.kind !== m.kind;
+            return (
+              <ChatBubble
+                key={m.id}
+                message={m}
+                onChip={onChip}
+                onRetry={onRetry}
+                isFirstInGroup={isFirstInGroup}
+                isLastInGroup={isLastInGroup}
+              />
+            );
+          })}
           {pending && (
             <div className="flex justify-start fade-in">
               <TypingIndicator />
@@ -303,6 +319,7 @@ export default function Chat() {
           )}
         </div>
       </div>
+
 
       <Composer
         ref={composerRef}
