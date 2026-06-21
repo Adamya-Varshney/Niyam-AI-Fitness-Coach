@@ -184,6 +184,7 @@ export default function Onboard() {
               equipment: [equipment],
               injuries: finalInjuries.trim(),
               dietary_preference: finalDiet,
+              baseline_plan: (res.baseline_plan ?? null) as unknown as never,
               onboarded_at: new Date().toISOString(),
             },
             { onConflict: "id" },
