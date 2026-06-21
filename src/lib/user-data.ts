@@ -87,8 +87,8 @@ export async function persistChatMessage(
       role: msg.role,
       text: msg.text,
       why: msg.why ?? null,
-      plan_changes: msg.plan_changes ?? null,
-      ui_actions: msg.ui_actions ?? null,
+      plan_changes: (msg.plan_changes ?? null) as unknown as never,
+      ui_actions: (msg.ui_actions ?? null) as unknown as never,
       kind: msg.kind ?? null,
     });
   } catch {
