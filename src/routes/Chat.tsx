@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { ApiError, newId, postChat, postNudgeAck } from "@/lib/api";
 import { useStatePolling } from "@/lib/polling";
 import { useUser } from "@/lib/user-context";
-import { useCloudUserData, persistChatMessage } from "@/lib/user-data";
+import { useCloudUserData } from "@/lib/user-data";
 import type { BaselinePlan, ChatMessage, MessageType, Nudge, RecentTurn, SessionPlan } from "@/lib/types";
 
 interface OnboardSeed {
@@ -100,15 +100,8 @@ export default function Chat() {
     setMessages([{ id: "welcome", role: "agent", text: greeting }]);
   }, []);
 
-  // When cloud history loads, replace the seeded greeting with persisted messages.
-  useEffect(() => {
-    if (cloudMergedRef.current) return;
-    if (cloud.loading) return;
-    cloudMergedRef.current = true;
-    if (cloud.chatHistory.length > 0) {
-      setMessages(cloud.chatHistory);
-    }
-  }, [cloud.loading, cloud.chatHistory]);
+  // Cloud chat history removed — n8n /state is the source of truth for recent turns.
+
 
   // When real history arrives from polling, merge it in if richer than what we have.
   const turnsMergedRef = useRef(false);
@@ -184,7 +177,7 @@ export default function Chat() {
       ...prev,
       { id: userMsgId, role: "user", text },
     ]);
-    void persistChatMessage(userId, { role: "user", text });
+    
     setPending(true);
 
     try {
@@ -206,13 +199,8 @@ export default function Chat() {
           ui_actions: res.ui_actions,
         },
       ]);
-      void persistChatMessage(userId, {
-        role: "agent",
-        text: res.reply,
-        why: res.why,
-        plan_changes: res.plan_changes,
-        ui_actions: res.ui_actions,
-      });
+
+
       void polling.refresh();
     } catch (err) {
       const apiErr = err instanceof ApiError ? err : null;
